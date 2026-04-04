@@ -2,6 +2,7 @@ import "@fontsource/inter";
 import "@fontsource-variable/noto-sans-sc";
 
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
 import { env } from "@/lib/env";
 
@@ -12,9 +13,22 @@ export const metadata: Metadata = {
   description: "Shared login for MiniTickets and related small apps.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+const themeTokens = new Set(["system", "light", "dark"]);
+const accentTokens = new Set(["blue", "cyan", "teal", "green", "lime", "yellow", "orange", "red", "pink", "purple"]);
+const localeTokens = new Set(["en", "zh_cn"]);
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const theme = (cookieStore.get(env.sharedThemeCookieName)?.value || "system").toLowerCase();
+  const accent = (cookieStore.get(env.sharedAccentCookieName)?.value || "teal").toLowerCase();
+  const locale = (cookieStore.get(env.sharedLocaleCookieName)?.value || env.defaultLocale).toLowerCase();
+
   return (
-    <html lang="en">
+    <html
+      lang={localeTokens.has(locale) && locale === "zh_cn" ? "zh-CN" : "en"}
+      data-theme={themeTokens.has(theme) ? theme : "system"}
+      data-accent={accentTokens.has(accent) ? accent : "teal"}
+    >
       <body>{children}</body>
     </html>
   );

@@ -21,6 +21,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - the first real admin should be created deliberately during deploy bootstrap
 - production email delivery is not wired yet; development currently uses an on-page preview code flow for MFA
 - MiniAuth now stores shared `locale`, `themePreference`, and `accentColor` values and writes neutral shared cookies for compatible apps on the same parent domain
+- MiniAuth now reads those shared values back into root `data-theme` and `data-accent` attributes so its rendering model stays compatible with MiniTickets
 - the auth pages and admin dashboard now follow a calmer, more restrained presentation pass rather than the original scaffold styling
 - the primary sign-in page is intentionally minimal and only shows the sign-in heading, core fields, and action button
 - the app serves a site-wide `robots.txt` disallow so search engines are asked not to index MiniAuth

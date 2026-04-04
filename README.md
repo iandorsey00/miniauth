@@ -34,6 +34,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - Invite flow creates a password setup link for you to send through your own email workflow.
 - App-local authorization is intentionally left to downstream apps; MiniAuth owns identity and session basics.
 - MiniAuth now carries shared preference values for locale, theme, and accent, and issues neutral shared cookies for downstream apps on the same parent domain.
+- MiniAuth now also renders with MiniTickets-compatible `data-theme` and `data-accent` root attributes so the same shared preference values drive a compatible family look.
 - The current UI uses a calmer auth layout, and the sign-in page is intentionally reduced to a minimal card with only the essential fields and action.
 - The app serves `robots.txt` with a full-site disallow policy.
 - Deployment and migration docs live in `docs/`:
