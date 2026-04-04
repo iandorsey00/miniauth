@@ -61,7 +61,16 @@ Confirm:
 - the systemd service is active
 - the reverse proxy reload succeeded
 - `GET /api/health` returns `{"ok":true,"service":"miniauth"}`
+- `GET /robots.txt` returns a full-site disallow policy
 - a real sign-in and sign-out round trip works
+
+## Browser behavior at the app hostname
+
+Once the reverse proxy is pointing at MiniAuth correctly:
+
+- `GET /` should redirect unauthenticated visitors to the MiniAuth sign-in page
+- signed-in admins should land on the MiniAuth dashboard
+- if you still see a Caddy welcome page, the hostname is still hitting the default Caddy site instead of the MiniAuth reverse proxy block
 
 ## Rollback
 
