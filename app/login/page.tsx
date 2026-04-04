@@ -24,6 +24,8 @@ export default async function LoginPage({
   const errorMessage =
     params.error === "inactive"
       ? dictionary.auth.inactive
+      : params.error === "mfa_send"
+        ? dictionary.auth.mfaSendFailed
       : params.error === "rate_limited"
         ? dictionary.auth.rateLimited
         : params.error === "invalid"
@@ -47,6 +49,7 @@ export default async function LoginPage({
         <section className="login-card">
           <div className="stack">
             <h2>{dictionary.auth.loginTitle}</h2>
+            {params.setup === "1" ? <div className="badge badge-success">Password set. You can sign in now.</div> : null}
             {errorMessage ? <div className="badge badge-danger">{errorMessage}</div> : null}
             <form action={loginAction}>
               <div className="field">

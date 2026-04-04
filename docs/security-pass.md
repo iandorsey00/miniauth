@@ -13,6 +13,7 @@ Scope reviewed:
 - minimal sign-in page simplification
 - shared preference cookie issuance for locale, theme, and accent
 - cookie-driven root theme and accent rendering compatibility
+- Resend-backed MFA email delivery and login feedback-state restoration
 - deployment and secret-handling defaults
 
 Changes made during the pass:
@@ -21,6 +22,7 @@ Changes made during the pass:
 - limited invite and session-revocation actions to MiniAuth admins
 - kept shared preference cookies constrained to neutral value transport rather than shared CSS or UI implementation
 - kept cookie-driven root rendering limited to theme, accent, and locale presentation concerns rather than access control decisions
+- added send, resend, and verify rate-limited MFA handling with explicit send-failure cleanup
 - kept deploy documentation placeholder-based so no private host or secret detail is committed
 - kept production secrets and deploy env values out of the repo
 
@@ -31,6 +33,7 @@ Open follow-ups:
 - consider audit logging for admin auth actions
 - consider a dedicated signed identity handoff endpoint for MiniTickets integration if shared cookies are not practical
 - consider a dedicated shared-preferences update surface so apps do not need to mutate parent-domain cookies independently
+- consider whether login and invite mail delivery should share a single higher-level mail module once MiniAuth sends all auth emails directly
 
 Visual refresh note:
 

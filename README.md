@@ -30,12 +30,12 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 
 ## Notes
 
-- Email-code delivery is stubbed for now. In development, the current login code is shown on the verify page after sign-in.
+- MFA email-code delivery now supports Resend. In development, the current login code is still shown on the verify page when mail delivery is not configured.
 - Invite flow creates a password setup link for you to send through your own email workflow.
 - App-local authorization is intentionally left to downstream apps; MiniAuth owns identity and session basics.
 - MiniAuth now carries shared preference values for locale, theme, and accent, and issues neutral shared cookies for downstream apps on the same parent domain.
 - MiniAuth now also renders with MiniTickets-compatible `data-theme` and `data-accent` root attributes so the same shared preference values drive a compatible family look.
-- The current UI uses a calmer auth layout, and the sign-in page is intentionally reduced to a minimal card with only the essential fields and action.
+- The current UI uses a calmer auth layout, and the sign-in page keeps a minimal structure while still surfacing important sign-in feedback such as inactive-account, invalid-login, rate-limit, MFA-send, and password-setup success states.
 - The app serves `robots.txt` with a full-site disallow policy.
 - Deployment and migration docs live in `docs/`:
   - `docs/deploy.md`

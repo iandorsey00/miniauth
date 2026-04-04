@@ -1,6 +1,9 @@
 "use server";
 
+import crypto from "node:crypto";
+
 import { Locale } from "@prisma/client";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -15,6 +18,7 @@ import {
   startSession,
 } from "@/lib/auth";
 import { AUTH_ROUTES } from "@/lib/constants";
+import { sendLoginCodeEmail } from "@/lib/email";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { createPasswordSetupToken, hashPasswordSetupToken } from "@/lib/password-setup";
 import { prisma } from "@/lib/prisma";
@@ -44,6 +48,15 @@ const inviteSchema = z.object({
   appKey: z.string().trim().min(2).max(40),
 });
 
+async function getClientIp() {
+  const headerStore = await headers();
+  const forwarded = headerStore.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0]?.trim() || "unknown";
+  }
+  return headerStore.get("x-real-ip") || "unknown";
+}
+
 export async function loginAction(formData: FormData) {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
@@ -55,9 +68,10 @@ export async function loginAction(formData: FormData) {
   }
 
   const email = parsed.data.email.trim().toLowerCase();
+  const clientIp = await getClientIp();
 
   try {
-    await assertRateLimit("login", email);
+    await assertRateLimit("login", `${email}|${clientIp}`, 5);
   } catch {
     redirect(`${AUTH_ROUTES.login}?error=rate_limited`);
   }
@@ -75,14 +89,29 @@ export async function loginAction(formData: FormData) {
     redirect(`${AUTH_ROUTES.login}?error=invalid`);
   }
 
-  await clearRateLimit("login", email);
-
   if (user.emailMfaEnabled) {
-    await createLoginChallenge(user.id);
+    try {
+      const challenge = await createLoginChallenge(user.id);
+      await sendLoginCodeEmail({
+        recipient: {
+          email: user.email,
+          displayName: user.displayName,
+          locale: user.locale,
+        },
+        code: challenge.code,
+      });
+    } catch (error) {
+      console.error("Failed to send login verification code", error);
+      await clearLoginChallenge();
+      redirect(`${AUTH_ROUTES.login}?error=mfa_send`);
+    }
+
+    await clearRateLimit("login", `${email}|${clientIp}`);
     redirect(`${AUTH_ROUTES.verify}?sent=1`);
   }
 
   await startSession(user.id);
+  await clearRateLimit("login", `${email}|${clientIp}`);
   await prisma.user.update({
     where: { id: user.id },
     data: { lastLoginAt: new Date() },
@@ -100,6 +129,12 @@ export async function verifyLoginCodeAction(formData: FormData) {
     redirect(`${AUTH_ROUTES.verify}?error=expired`);
   }
 
+  try {
+    await assertRateLimit("login_mfa_verify", `${challenge.tokenHash}|${await getClientIp()}`, 5);
+  } catch {
+    redirect(`${AUTH_ROUTES.verify}?error=expired`);
+  }
+
   if (challenge.codeHash !== sha256(parsed.data.code)) {
     redirect(`${AUTH_ROUTES.verify}?error=invalid`);
   }
@@ -109,6 +144,7 @@ export async function verifyLoginCodeAction(formData: FormData) {
     data: { usedAt: new Date() },
   });
 
+  await clearRateLimit("login_mfa_verify", `${challenge.tokenHash}|${await getClientIp()}`);
   await clearLoginChallenge();
   await startSession(challenge.userId);
   await prisma.user.update({
@@ -126,7 +162,28 @@ export async function resendLoginCodeAction() {
     redirect(`${AUTH_ROUTES.login}?error=invalid`);
   }
 
-  await createLoginChallenge(challenge.userId);
+  try {
+    await assertRateLimit("login_mfa_send", `${challenge.userId}|${await getClientIp()}`, 3);
+  } catch {
+    redirect(`${AUTH_ROUTES.verify}?error=expired`);
+  }
+
+  try {
+    const refreshed = await createLoginChallenge(challenge.userId);
+    await sendLoginCodeEmail({
+      recipient: {
+        email: challenge.user.email,
+        displayName: challenge.user.displayName,
+        locale: challenge.user.locale,
+      },
+      code: refreshed.code,
+    });
+  } catch (error) {
+    console.error("Failed to resend login verification code", error);
+    await clearLoginChallenge();
+    redirect(`${AUTH_ROUTES.verify}?error=invalid`);
+  }
+
   redirect(`${AUTH_ROUTES.verify}?sent=1`);
 }
 

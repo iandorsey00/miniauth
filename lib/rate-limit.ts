@@ -3,7 +3,7 @@ import { env } from "@/lib/env";
 
 const WINDOW_MS = env.rateLimitWindowMinutes * 60 * 1000;
 
-export async function assertRateLimit(scope: string, key: string) {
+export async function assertRateLimit(scope: string, key: string, maxAttempts = env.rateLimitMaxAttempts) {
   const now = new Date();
   const existing = await prisma.authRateLimit.findUnique({
     where: {
@@ -33,7 +33,7 @@ export async function assertRateLimit(scope: string, key: string) {
   const windowExpired = now.getTime() - existing.windowStart.getTime() > WINDOW_MS;
   const nextAttemptCount = windowExpired ? 1 : existing.attemptCount + 1;
   const blockedUntil =
-    nextAttemptCount > env.rateLimitMaxAttempts ? new Date(now.getTime() + WINDOW_MS) : null;
+    nextAttemptCount > maxAttempts ? new Date(now.getTime() + WINDOW_MS) : null;
 
   await prisma.authRateLimit.update({
     where: { scope_key: { scope, key } },
