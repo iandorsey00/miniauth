@@ -19,6 +19,32 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html:lang(en) body,
+html:lang(en) button,
+html:lang(en) input,
+html:lang(en) select,
+html:lang(en) textarea {
+  font-family: "Inter", sans-serif;
+}
+
+html:lang(zh) body,
+html:lang(zh) button,
+html:lang(zh) input,
+html:lang(zh) select,
+html:lang(zh) textarea,
+html:lang(zh-CN) body,
+html:lang(zh-CN) button,
+html:lang(zh-CN) input,
+html:lang(zh-CN) select,
+html:lang(zh-CN) textarea {
+  font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC Variable", "Noto Sans SC", "Inter", sans-serif;
+}
+
+:lang(zh) .subtitle-only,
+:lang(zh-CN) .subtitle-only {
+  letter-spacing: -0.04em;
+}
+
 html[data-theme="light"] {
   --bg: #f4f6fb;
   --bg-strong: #e9edf5;
@@ -348,6 +374,119 @@ label {
   margin: 0;
 }
 
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  background:
+    radial-gradient(circle at top left, var(--accent-glow-auth-strong), transparent 28%),
+    radial-gradient(circle at right top, var(--accent-glow-auth-soft), transparent 25%),
+    var(--bg);
+}
+
+.minitickets-auth-card {
+  width: min(100%, 760px);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 1.5rem 3rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.hero-card {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 0;
+  margin-bottom: 3.4rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.subtitle-only {
+  display: inline-flex;
+  color: var(--text);
+  font-size: clamp(4rem, 9vw, 6.6rem);
+  font-weight: 800;
+  letter-spacing: -0.09em;
+  line-height: 0.9;
+}
+
+.login-brand {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.login-brand-subtitle {
+  color: var(--accent);
+  font-family: "Inter", sans-serif !important;
+  font-variant-east-asian: normal;
+  font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.login-card form {
+  display: grid;
+  gap: 1rem;
+}
+
+.login-card {
+  width: min(100%, 440px);
+  margin: 0 auto;
+  padding: 1.8rem 1.6rem 1.65rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 28px;
+  backdrop-filter: blur(18px);
+}
+
+.login-card h2 {
+  margin: 0;
+  font-size: clamp(2.25rem, 4.2vw, 3.75rem);
+  font-weight: 800;
+  letter-spacing: -0.07em;
+  color: var(--text);
+  text-align: center;
+}
+
+.login-card .field label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}
+
+.login-card input {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-strong) 84%, transparent);
+  color: var(--text);
+  padding: 0.92rem 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.login-card button {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  min-height: 2.9rem;
+  font-weight: 700;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
 .auth-note-list {
   display: grid;
   gap: 0.9rem;
@@ -453,6 +592,12 @@ h3 {
   color: var(--danger);
 }
 
+.badge-danger {
+  background: rgba(179, 58, 41, 0.12);
+  color: var(--danger);
+  justify-content: center;
+}
+
 .success-note,
 .error-note {
   border-radius: 18px;
@@ -539,5 +684,38 @@ code {
 
   .meta-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-page {
+    padding: 0;
+    align-items: center;
+  }
+
+  .minitickets-auth-card {
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1rem calc(3.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .hero-card {
+    padding-top: 0;
+    margin-bottom: 3rem;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 440px;
+    padding-bottom: calc(1.35rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .login-card h2 {
+    font-size: clamp(2.1rem, 8vw, 3rem);
+  }
+
+  .subtitle-only {
+    font-size: clamp(3.2rem, 13vw, 5.1rem);
+    line-height: 0.92;
   }
 }

@@ -36,3 +36,4 @@ Visual refresh note:
 
 - this pass changed layout, hierarchy, and styling only; it did not expand auth capabilities, add new data exposure, or loosen any authorization checks
 - the stripped-down sign-in page remains presentation-only and does not change validation, redirects, or credential handling
+- the MiniTickets-style sign-in alignment remains presentation-only and does not expand authentication scope, change cookie semantics, or loosen any access checks
