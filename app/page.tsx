@@ -67,15 +67,32 @@ export default async function HomePage({
   ]);
 
   const inviteLink = params.invite === "ok" && params.setupToken ? buildSetupLink(params.setupToken) : null;
+  const activeUsers = users.filter((account) => account.isActive).length;
+  const mfaUsers = users.filter((account) => account.emailMfaEnabled).length;
+  const grantedApps = new Set(users.flatMap((account) => account.appAccess.map((access) => access.appKey))).size;
 
   return (
     <main className="shell">
-      <section className="panel hero">
+      <section className="hero-slab">
         <div className="hero-row">
-          <div>
+          <div className="hero-copy">
             <p className="eyebrow">{dictionary.appName}</p>
             <h1>{dictionary.dashboard.title}</h1>
             <p>{dictionary.dashboard.subtitle}</p>
+          </div>
+          <div className="hero-metrics">
+            <div className="metric-card">
+              <span className="metric-value">{users.length}</span>
+              <span className="metric-label">Accounts</span>
+            </div>
+            <div className="metric-card">
+              <span className="metric-value">{sessions.length}</span>
+              <span className="metric-label">Live sessions</span>
+            </div>
+            <div className="metric-card">
+              <span className="metric-value">{grantedApps}</span>
+              <span className="metric-label">Apps</span>
+            </div>
           </div>
           <form action={logoutAction}>
             <button className="ghost-button" type="submit">
@@ -86,7 +103,7 @@ export default async function HomePage({
       </section>
 
       {inviteLink ? (
-        <section className="panel success-panel">
+        <section className="panel message-panel success-panel">
           <div className="stack">
             <strong>{dictionary.common.inviteLink}</strong>
             <code>{inviteLink}</code>
@@ -96,13 +113,28 @@ export default async function HomePage({
       ) : null}
 
       {params.seed === "1" ? (
-        <section className="panel success-panel">
+        <section className="panel message-panel success-panel">
           MiniAuth admin access has been added to your account.
         </section>
       ) : null}
 
+      <section className="overview-grid">
+        <div className="overview-card">
+          <span className="overview-label">Active accounts</span>
+          <strong>{activeUsers}</strong>
+        </div>
+        <div className="overview-card">
+          <span className="overview-label">Email MFA enabled</span>
+          <strong>{mfaUsers}</strong>
+        </div>
+        <div className="overview-card">
+          <span className="overview-label">Pending without password</span>
+          <strong>{users.filter((account) => !account.passwordHash).length}</strong>
+        </div>
+      </section>
+
       <section className="grid">
-        <div className="panel">
+        <div className="panel panel-strong">
           <div className="section-heading">
             <div>
               <p className="eyebrow">{dictionary.dashboard.createInvite}</p>
@@ -129,9 +161,9 @@ export default async function HomePage({
               <label htmlFor="appKey">{dictionary.common.app}</label>
               <input id="appKey" name="appKey" type="text" defaultValue="minitickets" required />
             </div>
-            <label className="checkbox-row">
-              <input name="emailMfaEnabled" type="checkbox" />
+            <label className="toggle-row">
               <span>{dictionary.common.mfa}</span>
+              <input name="emailMfaEnabled" type="checkbox" />
             </label>
             <button type="submit">{dictionary.auth.inviteSubmit}</button>
           </form>
@@ -147,32 +179,34 @@ export default async function HomePage({
           <div className="stack">
             {sessions.length ? (
               sessions.map((session) => (
-                <article className="list-row" key={session.id}>
-                  <div>
-                    <strong>{session.user.email}</strong>
-                    <p>Created {formatDate(session.createdAt)}</p>
-                    <p>Expires {formatDate(session.expiresAt)}</p>
+                <article className="list-card" key={session.id}>
+                  <div className="list-row">
+                    <div>
+                      <strong>{session.user.email}</strong>
+                      <p>Created {formatDate(session.createdAt)}</p>
+                      <p>Expires {formatDate(session.expiresAt)}</p>
+                    </div>
+                    <form action={revokeSessionAction}>
+                      <input name="sessionId" type="hidden" value={session.id} />
+                      <button className="ghost-button" type="submit">
+                        Revoke
+                      </button>
+                    </form>
                   </div>
-                  <form action={revokeSessionAction}>
-                    <input name="sessionId" type="hidden" value={session.id} />
-                    <button className="ghost-button" type="submit">
-                      Revoke
-                    </button>
-                  </form>
                 </article>
               ))
             ) : (
-              <p>No active sessions.</p>
+              <p className="empty-state">No active sessions.</p>
             )}
           </div>
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel panel-wide">
         <div className="section-heading">
           <div>
             <p className="eyebrow">{dictionary.dashboard.title}</p>
-            <h2>{dictionary.dashboard.title}</h2>
+            <h2>People and access</h2>
           </div>
           <Link className="text-link" href={AUTH_ROUTES.login}>
             {dictionary.auth.loginTitle}
@@ -192,10 +226,10 @@ export default async function HomePage({
                   </div>
                 </div>
                 <div className="meta-grid">
-                  <span>{dictionary.common.locale}: {account.locale}</span>
-                  <span>{dictionary.common.mfa}: {account.emailMfaEnabled ? dictionary.common.yes : dictionary.common.no}</span>
-                  <span>{dictionary.common.passwordSet}: {account.passwordHash ? dictionary.common.yes : dictionary.common.no}</span>
-                  <span>{dictionary.common.createdAt}: {formatDate(account.createdAt)}</span>
+                  <span><strong>{dictionary.common.locale}</strong><br />{account.locale}</span>
+                  <span><strong>{dictionary.common.mfa}</strong><br />{account.emailMfaEnabled ? dictionary.common.yes : dictionary.common.no}</span>
+                  <span><strong>{dictionary.common.passwordSet}</strong><br />{account.passwordHash ? dictionary.common.yes : dictionary.common.no}</span>
+                  <span><strong>{dictionary.common.createdAt}</strong><br />{formatDate(account.createdAt)}</span>
                 </div>
                 <div className="access-list">
                   {account.appAccess.length ? (
@@ -205,13 +239,13 @@ export default async function HomePage({
                       </div>
                     ))
                   ) : (
-                    <p>{dictionary.dashboard.noAccess}</p>
+                    <p className="empty-state">{dictionary.dashboard.noAccess}</p>
                   )}
                 </div>
               </article>
             ))
           ) : (
-            <p>{dictionary.dashboard.noUsers}</p>
+            <p className="empty-state">{dictionary.dashboard.noUsers}</p>
           )}
         </div>
       </section>

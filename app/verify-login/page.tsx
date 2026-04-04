@@ -42,35 +42,39 @@ export default async function VerifyLoginPage({
 
   return (
     <main className="auth-shell">
-      <section className="auth-card">
-        <p className="eyebrow">{dictionary.appName}</p>
-        <h1>{dictionary.auth.verifyTitle}</h1>
-        <p className="lede">
-          {dictionary.auth.verifyIntro} {maskEmail(challenge.user.email)}
-        </p>
-        {params.sent === "1" ? (
-          <div className="success-note">
-            {dictionary.auth.verifySent}
-            {previewCode ? (
-              <>
-                {" "}Dev preview code: <code>{previewCode}</code>
-              </>
-            ) : null}
+      <section className="auth-layout auth-layout-compact">
+        <section className="auth-card">
+          <div className="auth-card-header">
+            <p className="eyebrow">{dictionary.appName}</p>
+            <h1>{dictionary.auth.verifyTitle}</h1>
+            <p className="lede">
+              {dictionary.auth.verifyIntro} {maskEmail(challenge.user.email)}
+            </p>
           </div>
-        ) : null}
-        {errorMessage ? <div className="error-note">{errorMessage}</div> : null}
-        <form className="stack" action={verifyLoginCodeAction}>
-          <div className="field">
-            <label htmlFor="code">{dictionary.auth.verificationCode}</label>
-            <input id="code" name="code" type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required />
-          </div>
-          <button type="submit">{dictionary.auth.verifySubmit}</button>
-        </form>
-        <form action={resendLoginCodeAction}>
-          <button className="ghost-button full-width" type="submit">
-            {dictionary.auth.resendCode}
-          </button>
-        </form>
+          {params.sent === "1" ? (
+            <div className="success-note">
+              {dictionary.auth.verifySent}
+              {previewCode ? (
+                <>
+                  {" "}Dev preview code: <code>{previewCode}</code>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+          {errorMessage ? <div className="error-note">{errorMessage}</div> : null}
+          <form className="stack" action={verifyLoginCodeAction}>
+            <div className="field">
+              <label htmlFor="code">{dictionary.auth.verificationCode}</label>
+              <input id="code" name="code" type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required />
+            </div>
+            <button type="submit">{dictionary.auth.verifySubmit}</button>
+          </form>
+          <form action={resendLoginCodeAction}>
+            <button className="ghost-button full-width" type="submit">
+              {dictionary.auth.resendCode}
+            </button>
+          </form>
+        </section>
       </section>
     </main>
   );

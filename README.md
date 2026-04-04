@@ -33,6 +33,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - Email-code delivery is stubbed for now. In development, the current login code is shown on the verify page after sign-in.
 - Invite flow creates a password setup link for you to send through your own email workflow.
 - App-local authorization is intentionally left to downstream apps; MiniAuth owns identity and session basics.
+- The current UI uses a calmer auth layout and a more restrained admin/dashboard presentation aligned with the shared interface guidance.
 - The app serves `robots.txt` with a full-site disallow policy.
 - Deployment and migration docs live in `docs/`:
   - `docs/deploy.md`

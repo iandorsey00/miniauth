@@ -9,6 +9,7 @@ Scope reviewed:
 - login email challenges
 - session issuance and revocation
 - admin-only invite and session-revoke actions
+- auth and dashboard presentation refresh
 - deployment and secret-handling defaults
 
 Changes made during the pass:
@@ -24,3 +25,7 @@ Open follow-ups:
 - consider CSRF hardening beyond framework defaults if cross-site auth entry points expand
 - consider audit logging for admin auth actions
 - consider a dedicated signed identity handoff endpoint for MiniTickets integration if shared cookies are not practical
+
+Visual refresh note:
+
+- this pass changed layout, hierarchy, and styling only; it did not expand auth capabilities, add new data exposure, or loosen any authorization checks

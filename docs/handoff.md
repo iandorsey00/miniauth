@@ -19,6 +19,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 
 - the first real admin should be created deliberately during deploy bootstrap
 - production email delivery is not wired yet; development currently uses an on-page preview code flow for MFA
+- the auth pages and admin dashboard now follow a calmer, more restrained presentation pass rather than the original scaffold styling
 - the app serves a site-wide `robots.txt` disallow so search engines are asked not to index MiniAuth
 - deployment docs intentionally use placeholders and examples only; keep private host and secret details in private runbooks or server-local env files
 - use [deploy.md](/Users/iandorsey/dev/miniauth/docs/deploy.md) for build, deploy, health-check, and rollback steps
