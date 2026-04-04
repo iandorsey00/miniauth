@@ -17,5 +17,8 @@ export const env = {
   authCookieName: process.env.AUTH_COOKIE_NAME || "miniauth_session",
   loginChallengeCookieName: process.env.AUTH_LOGIN_CHALLENGE_COOKIE_NAME || "miniauth_login_challenge",
   authSharedCookieDomain: process.env.AUTH_SHARED_COOKIE_DOMAIN || "",
+  sharedLocaleCookieName: process.env.SHARED_LOCALE_COOKIE_NAME || "mini_locale",
+  sharedThemeCookieName: process.env.SHARED_THEME_COOKIE_NAME || "mini_theme",
+  sharedAccentCookieName: process.env.SHARED_ACCENT_COOKIE_NAME || "mini_accent",
   loginPreviewCookieName: "miniauth_login_preview",
 } as const;

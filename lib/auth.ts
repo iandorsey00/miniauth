@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import type { AccentColor, Locale, ThemePreference } from "@prisma/client";
 
 import { AUTH_ROUTES } from "@/lib/constants";
 import { env } from "@/lib/env";
@@ -18,10 +19,47 @@ function getCookieOptions(expiresAt: Date) {
   };
 }
 
+function toCookieValue(value: Locale | ThemePreference | AccentColor) {
+  return value.toLowerCase();
+}
+
+async function applySharedPreferenceCookies(preferences: {
+  locale: Locale;
+  themePreference: ThemePreference;
+  accentColor: AccentColor;
+}, expiresAt: Date) {
+  const cookieStore = await cookies();
+  const cookieOptions = getCookieOptions(expiresAt);
+
+  cookieStore.set(env.sharedLocaleCookieName, toCookieValue(preferences.locale), cookieOptions);
+  cookieStore.set(env.sharedThemeCookieName, toCookieValue(preferences.themePreference), cookieOptions);
+  cookieStore.set(env.sharedAccentCookieName, toCookieValue(preferences.accentColor), cookieOptions);
+}
+
+async function clearSharedPreferenceCookies() {
+  const cookieStore = await cookies();
+  cookieStore.delete(env.sharedLocaleCookieName);
+  cookieStore.delete(env.sharedThemeCookieName);
+  cookieStore.delete(env.sharedAccentCookieName);
+}
+
 export async function startSession(userId: string) {
   const rawToken = generateToken();
   const tokenHash = sha256(rawToken);
   const expiresAt = new Date(Date.now() + env.sessionDays * 24 * 60 * 60 * 1000);
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      locale: true,
+      themePreference: true,
+      accentColor: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("USER_NOT_FOUND");
+  }
 
   await prisma.session.create({
     data: {
@@ -33,6 +71,7 @@ export async function startSession(userId: string) {
 
   const cookieStore = await cookies();
   cookieStore.set(env.authCookieName, rawToken, getCookieOptions(expiresAt));
+  await applySharedPreferenceCookies(user, expiresAt);
 }
 
 export async function destroySession() {
@@ -47,6 +86,7 @@ export async function destroySession() {
   }
 
   cookieStore.delete(env.authCookieName);
+  await clearSharedPreferenceCookies();
 }
 
 export async function createLoginChallenge(userId: string) {

@@ -11,6 +11,25 @@ enum Locale {
   EN
 }
 
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum AccentColor {
+  BLUE
+  CYAN
+  TEAL
+  GREEN
+  LIME
+  YELLOW
+  ORANGE
+  RED
+  PINK
+  PURPLE
+}
+
 enum AppAccessRole {
   ADMIN
   MEMBER
@@ -27,6 +46,8 @@ model User {
   displayName         String
   passwordHash        String?
   locale              Locale                @default(EN)
+  themePreference     ThemePreference       @default(SYSTEM)
+  accentColor         AccentColor           @default(TEAL)
   isActive            Boolean               @default(true)
   emailMfaEnabled     Boolean               @default(false)
   lastLoginAt         DateTime?

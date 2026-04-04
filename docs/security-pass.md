@@ -11,12 +11,14 @@ Scope reviewed:
 - admin-only invite and session-revoke actions
 - auth and dashboard presentation refresh
 - minimal sign-in page simplification
+- shared preference cookie issuance for locale, theme, and accent
 - deployment and secret-handling defaults
 
 Changes made during the pass:
 
 - removed MFA code leakage through redirect query parameters
 - limited invite and session-revocation actions to MiniAuth admins
+- kept shared preference cookies constrained to neutral value transport rather than shared CSS or UI implementation
 - kept deploy documentation placeholder-based so no private host or secret detail is committed
 - kept production secrets and deploy env values out of the repo
 
@@ -26,6 +28,7 @@ Open follow-ups:
 - consider CSRF hardening beyond framework defaults if cross-site auth entry points expand
 - consider audit logging for admin auth actions
 - consider a dedicated signed identity handoff endpoint for MiniTickets integration if shared cookies are not practical
+- consider a dedicated shared-preferences update surface so apps do not need to mutate parent-domain cookies independently
 
 Visual refresh note:
 
