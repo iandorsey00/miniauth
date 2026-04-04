@@ -1,0 +1,18 @@
+[Unit]
+Description=MiniAuth Next.js application
+After=network.target
+
+[Service]
+Type=simple
+User=${APP_USER}
+Group=${APP_GROUP}
+WorkingDirectory=${APP_DIR}
+Environment=NODE_ENV=production
+Environment=PORT=${APP_PORT}
+EnvironmentFile=${ENV_FILE}
+ExecStart=${NODE_BIN_DIR}/npm start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
