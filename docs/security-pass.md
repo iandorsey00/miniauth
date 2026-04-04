@@ -10,6 +10,7 @@ Scope reviewed:
 - session issuance and revocation
 - admin-only invite and session-revoke actions
 - auth and dashboard presentation refresh
+- minimal sign-in page simplification
 - deployment and secret-handling defaults
 
 Changes made during the pass:
@@ -29,3 +30,4 @@ Open follow-ups:
 Visual refresh note:
 
 - this pass changed layout, hierarchy, and styling only; it did not expand auth capabilities, add new data exposure, or loosen any authorization checks
+- the stripped-down sign-in page remains presentation-only and does not change validation, redirects, or credential handling
