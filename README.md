@@ -45,6 +45,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - The current UI uses a calmer auth layout, and the sign-in page keeps a minimal structure while still surfacing important sign-in feedback such as inactive-account, invalid-login, rate-limit, MFA-send, and password-setup success states.
 - The broader dashboard and auth surfaces now follow a more cohesive bilingual polish pass, with more consistent spacing, calmer card and form rhythm, and dictionary-backed copy across the remaining admin and account-preference flows.
 - MiniAuth now also uses a dedicated lock app icon and a quieter top-left auth header pattern across sign-in, verification, password-setup, and signed-in dashboard surfaces so branding feels more consistent with the wider app family.
+- Dark-mode card and panel surfaces have also been tuned so dashboard metrics, account cards, inline forms, notes, and supporting panels sit more naturally against the darker palette instead of feeling washed out.
 - MiniAuth now accepts a validated `returnTo` target on login and MFA verification so trusted apps such as MiniTickets can send users back to their own post-login route after successful authentication.
 - MiniAuth now also exposes a shared logout route so downstream apps can clear the shared MiniAuth session and send users back to their own sign-in screen in one step.
 - The app serves `robots.txt` with a full-site disallow policy.

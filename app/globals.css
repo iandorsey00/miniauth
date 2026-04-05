@@ -52,6 +52,12 @@ html[data-theme="light"] {
   --surface: rgba(255, 255, 255, 0.86);
   --surface-strong: #ffffff;
   --surface-deep: rgba(255, 255, 255, 0.92);
+  --surface-raised: rgba(255, 255, 255, 0.72);
+  --surface-soft: rgba(255, 255, 255, 0.48);
+  --surface-code: rgba(255, 255, 255, 0.54);
+  --surface-note: rgba(255, 255, 255, 0.42);
+  --surface-tint-strong: rgba(255, 255, 255, 0.14);
+  --surface-tint-soft: rgba(255, 255, 255, 0.12);
   --text: #121721;
   --muted: #5f6b7b;
   --accent-ink: var(--accent);
@@ -64,6 +70,12 @@ html[data-theme="dark"] {
   --surface: rgba(19, 26, 36, 0.84);
   --surface-strong: #131a24;
   --surface-deep: rgba(19, 26, 36, 0.92);
+  --surface-raised: rgba(25, 33, 46, 0.86);
+  --surface-soft: rgba(24, 32, 45, 0.78);
+  --surface-code: rgba(20, 27, 38, 0.88);
+  --surface-note: rgba(23, 31, 43, 0.8);
+  --surface-tint-strong: rgba(255, 255, 255, 0.06);
+  --surface-tint-soft: rgba(255, 255, 255, 0.05);
   --text: #edf2f7;
   --muted: #98a6b8;
   --accent-ink: color-mix(in srgb, var(--accent) 78%, white 22%);
@@ -78,6 +90,12 @@ html[data-theme="system"] {
   --surface: rgba(255, 255, 255, 0.86);
   --surface-strong: #ffffff;
   --surface-deep: rgba(255, 255, 255, 0.92);
+  --surface-raised: rgba(255, 255, 255, 0.72);
+  --surface-soft: rgba(255, 255, 255, 0.48);
+  --surface-code: rgba(255, 255, 255, 0.54);
+  --surface-note: rgba(255, 255, 255, 0.42);
+  --surface-tint-strong: rgba(255, 255, 255, 0.14);
+  --surface-tint-soft: rgba(255, 255, 255, 0.12);
   --text: #121721;
   --muted: #5f6b7b;
   --accent-ink: var(--accent);
@@ -91,6 +109,12 @@ html[data-theme="system"] {
     --surface: rgba(19, 26, 36, 0.84);
     --surface-strong: #131a24;
     --surface-deep: rgba(19, 26, 36, 0.92);
+    --surface-raised: rgba(25, 33, 46, 0.86);
+    --surface-soft: rgba(24, 32, 45, 0.78);
+    --surface-code: rgba(20, 27, 38, 0.88);
+    --surface-note: rgba(23, 31, 43, 0.8);
+    --surface-tint-strong: rgba(255, 255, 255, 0.06);
+    --surface-tint-soft: rgba(255, 255, 255, 0.05);
     --text: #edf2f7;
     --muted: #98a6b8;
     --accent-ink: color-mix(in srgb, var(--accent) 78%, white 22%);
@@ -285,7 +309,7 @@ label {
   align-content: space-between;
   min-height: 620px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 38%),
+    linear-gradient(180deg, var(--surface-tint-strong), transparent 38%),
     radial-gradient(circle at top right, var(--accent-glow-auth-strong), transparent 30%),
     var(--surface-deep);
 }
@@ -323,7 +347,7 @@ label {
   padding: 2.1rem;
   background:
     radial-gradient(circle at top right, var(--accent-glow-auth-strong), transparent 22%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 55%),
+    linear-gradient(180deg, var(--surface-tint-soft), transparent 55%),
     var(--surface-deep);
 }
 
@@ -341,7 +365,7 @@ label {
   min-width: 114px;
   padding: 0.95rem 1rem;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.44);
+  background: var(--surface-soft);
   border: 1px solid var(--border);
   display: grid;
   gap: 0.25rem;
@@ -379,7 +403,7 @@ label {
   padding: 1.2rem 1.25rem;
   display: grid;
   gap: 0.4rem;
-  background: rgba(255, 252, 247, 0.68);
+  background: var(--surface-raised);
 }
 
 .overview-card strong {
@@ -490,7 +514,7 @@ label {
   padding: 1.1rem 1.2rem;
   border-radius: 24px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.42);
+  background: var(--surface-note);
   box-shadow: var(--shadow-soft);
 }
 
@@ -532,7 +556,7 @@ h3 {
   border: 1px solid var(--border);
   border-radius: 26px;
   padding: 1.25rem;
-  background: rgba(255, 252, 247, 0.72);
+  background: var(--surface-raised);
   box-shadow: var(--shadow-soft);
 }
 
@@ -598,7 +622,7 @@ h3 {
   padding: 0.75rem 0.85rem;
   border-radius: 20px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.45);
+  background: var(--surface-soft);
 }
 
 .inline-form input,
@@ -654,7 +678,7 @@ h3 {
 }
 
 .panel-strong {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 50%), var(--surface-strong);
+  background: linear-gradient(180deg, var(--surface-tint-strong), transparent 50%), var(--surface-strong);
 }
 
 .panel-wide {
@@ -665,7 +689,7 @@ h3 {
   padding: 1rem 1.05rem;
   border-radius: 22px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.48);
+  background: var(--surface-soft);
 }
 
 .toggle-row {
@@ -693,7 +717,7 @@ h3 {
 code {
   display: block;
   overflow-wrap: anywhere;
-  background: rgba(255, 255, 255, 0.54);
+  background: var(--surface-code);
   border-radius: 18px;
   padding: 0.85rem 1rem;
   border: 1px solid var(--border);
