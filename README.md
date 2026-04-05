@@ -36,6 +36,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - App-local authorization is intentionally left to downstream apps; MiniAuth owns identity and session basics.
 - Existing accounts can now have email MFA enabled or disabled directly from the MiniAuth admin dashboard.
 - Existing accounts can now also be enabled or disabled directly from the MiniAuth admin dashboard; disabling an account revokes its live MiniAuth sessions so downstream apps stop treating it as an active user.
+- Existing users can now have app access grants added or updated directly from the MiniAuth admin dashboard, including per-app role and active or inactive state, without reusing the invite flow.
 - MiniAuth now carries shared preference values for locale, theme, and accent, and issues neutral shared cookies for downstream apps on the same parent domain.
 - MiniAuth now also renders with MiniTickets-compatible `data-theme` and `data-accent` root attributes so the same shared preference values drive a compatible family look.
 - Signed-in non-admin users now get a small MiniAuth account-preferences surface for shared locale, theme, and accent management instead of a dead-end dashboard screen.

@@ -2,7 +2,7 @@
 
 import crypto from "node:crypto";
 
-import { AccentColor, Locale, ThemePreference, WorkspaceRole } from "@prisma/client";
+import { AccentColor, AppAccessRole, AppAccessState, Locale, ThemePreference, WorkspaceRole } from "@prisma/client";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -48,6 +48,18 @@ const inviteSchema = z.object({
   locale: z.nativeEnum(Locale),
   emailMfaEnabled: z.boolean().optional(),
   appKey: z.string().trim().min(2).max(40),
+});
+
+const appAccessSchema = z.object({
+  userId: z.string().min(1),
+  appKey: z
+    .string()
+    .trim()
+    .min(2)
+    .max(40)
+    .regex(/^[a-z0-9-]+$/),
+  role: z.nativeEnum(AppAccessRole),
+  state: z.nativeEnum(AppAccessState),
 });
 
 const workspaceSchema = z.object({
@@ -300,7 +312,7 @@ export async function inviteUserAction(formData: FormData) {
     displayName: formData.get("displayName"),
     locale: formData.get("locale"),
     emailMfaEnabled: formData.get("emailMfaEnabled") === "on",
-    appKey: formData.get("appKey"),
+    appKey: String(formData.get("appKey") ?? "").trim().toLowerCase(),
   });
 
   if (!parsed.success) {
@@ -373,6 +385,41 @@ export async function inviteUserAction(formData: FormData) {
   redirect(
     `${AUTH_ROUTES.home}?invite=${inviteMode}&email=${encodeURIComponent(user.email)}&setupToken=${encodeURIComponent(token.rawToken)}&by=${encodeURIComponent(currentUser.email)}`,
   );
+}
+
+export async function upsertUserAppAccessAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = appAccessSchema.safeParse({
+    userId: formData.get("userId"),
+    appKey: String(formData.get("appKey") ?? "").trim().toLowerCase(),
+    role: formData.get("role"),
+    state: formData.get("state"),
+  });
+
+  if (!parsed.success) {
+    redirect(`${AUTH_ROUTES.home}?access=invalid`);
+  }
+
+  await prisma.appAccess.upsert({
+    where: {
+      userId_appKey: {
+        userId: parsed.data.userId,
+        appKey: parsed.data.appKey,
+      },
+    },
+    update: {
+      role: parsed.data.role,
+      state: parsed.data.state,
+    },
+    create: {
+      userId: parsed.data.userId,
+      appKey: parsed.data.appKey,
+      role: parsed.data.role,
+      state: parsed.data.state,
+    },
+  });
+
+  redirect(`${AUTH_ROUTES.home}?access=updated`);
 }
 
 export async function resendInviteAction(formData: FormData) {

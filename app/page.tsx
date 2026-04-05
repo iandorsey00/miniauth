@@ -10,6 +10,7 @@ import {
   resendInviteAction,
   revokeSessionAction,
   seedSelfAccessAction,
+  upsertUserAppAccessAction,
   updateUserActiveAction,
   updateUserMfaAction,
   updateSelfPreferencesAction,
@@ -51,7 +52,7 @@ function formatDate(value: Date | null) {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string; account?: string; preferences?: string; workspace?: string; membership?: string }>;
+  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string; account?: string; access?: string; preferences?: string; workspace?: string; membership?: string }>;
 }) {
   const user = await requireUser();
   const dictionary = getDictionary(user.locale);
@@ -250,6 +251,12 @@ export default async function HomePage({
         </section>
       ) : null}
 
+      {params.access === "updated" ? (
+        <section className="panel message-panel success-panel">
+          {dictionary.auth.appAccessUpdated}
+        </section>
+      ) : null}
+
       {params.workspace === "saved" ? (
         <section className="panel message-panel success-panel">
           {dictionary.dashboard.workspaces} saved.
@@ -306,7 +313,7 @@ export default async function HomePage({
               </select>
             </div>
             <div className="field">
-              <label htmlFor="appKey">{dictionary.common.app}</label>
+              <label htmlFor="appKey">{dictionary.auth.initialApp}</label>
               <input id="appKey" name="appKey" type="text" defaultValue="minitickets" required />
             </div>
             <label className="toggle-row">
@@ -382,14 +389,48 @@ export default async function HomePage({
                 <div className="access-list">
                   {account.appAccess.length ? (
                     account.appAccess.map((access) => (
-                      <div className="pill" key={access.id}>
-                        {access.appKey} · {access.role} · {access.state}
-                      </div>
+                      <form action={upsertUserAppAccessAction} className="inline-form" key={access.id}>
+                        <input name="userId" type="hidden" value={account.id} />
+                        <input name="appKey" type="hidden" value={access.appKey} />
+                        <div className="pill">{access.appKey}</div>
+                        <select aria-label={`${access.appKey} role`} name="role" defaultValue={access.role}>
+                          <option value="MEMBER">MEMBER</option>
+                          <option value="ADMIN">ADMIN</option>
+                        </select>
+                        <select aria-label={`${access.appKey} state`} name="state" defaultValue={access.state}>
+                          <option value="ACTIVE">ACTIVE</option>
+                          <option value="INACTIVE">INACTIVE</option>
+                        </select>
+                        <button className="ghost-button" type="submit">
+                          {dictionary.common.update}
+                        </button>
+                      </form>
                     ))
                   ) : (
                     <p className="empty-state">{dictionary.dashboard.noAccess}</p>
                   )}
                 </div>
+                <form action={upsertUserAppAccessAction} className="inline-form">
+                  <input name="userId" type="hidden" value={account.id} />
+                  <input
+                    aria-label={`${account.email} app key`}
+                    name="appKey"
+                    placeholder="miniassets"
+                    type="text"
+                    required
+                  />
+                  <select aria-label={`${account.email} new role`} name="role" defaultValue="MEMBER">
+                    <option value="MEMBER">MEMBER</option>
+                    <option value="ADMIN">ADMIN</option>
+                  </select>
+                  <select aria-label={`${account.email} new state`} name="state" defaultValue="ACTIVE">
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                  </select>
+                  <button className="ghost-button" type="submit">
+                    {dictionary.common.addAccess}
+                  </button>
+                </form>
                 <div className="access-list">
                   {account.memberships.length ? (
                     account.memberships.map((membership) => (
