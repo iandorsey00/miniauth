@@ -7,6 +7,7 @@ import {
   inviteUserAction,
   logoutAction,
   removeWorkspaceMembershipAction,
+  resendInviteAction,
   revokeSessionAction,
   seedSelfAccessAction,
   updateUserActiveAction,
@@ -324,6 +325,14 @@ export default async function HomePage({
                   )}
                 </div>
                 <div className="account-actions">
+                  {!account.passwordHash ? (
+                    <form action={resendInviteAction}>
+                      <input name="userId" type="hidden" value={account.id} />
+                      <button className="ghost-button" type="submit">
+                        {dictionary.auth.resendInvite}
+                      </button>
+                    </form>
+                  ) : null}
                   <form action={updateUserActiveAction}>
                     <input name="userId" type="hidden" value={account.id} />
                     <input name="enabled" type="hidden" value={account.isActive ? "0" : "1"} />

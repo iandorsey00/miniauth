@@ -32,6 +32,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 
 - MFA email-code delivery now supports Resend. In development, the current login code is still shown on the verify page when mail delivery is not configured.
 - Invite flow now sends the password setup email directly when mail delivery is configured, with the manual setup link still shown as a fallback if delivery fails.
+- Admins can now resend a fresh password-setup invite from the MiniAuth dashboard for accounts that still have not set a password.
 - App-local authorization is intentionally left to downstream apps; MiniAuth owns identity and session basics.
 - Existing accounts can now have email MFA enabled or disabled directly from the MiniAuth admin dashboard.
 - Existing accounts can now also be enabled or disabled directly from the MiniAuth admin dashboard; disabling an account revokes its live MiniAuth sessions so downstream apps stop treating it as an active user.

@@ -338,6 +338,47 @@ export async function inviteUserAction(formData: FormData) {
   );
 }
 
+export async function resendInviteAction(formData: FormData) {
+  const currentUser = await requireAdmin();
+  const userId = String(formData.get("userId") || "");
+
+  if (!userId) {
+    redirect(`${AUTH_ROUTES.home}?invite=invalid`);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user || !user.isActive) {
+    redirect(`${AUTH_ROUTES.home}?invite=invalid`);
+  }
+
+  const token = await createPasswordSetupToken(user.id);
+  let inviteMode: "sent" | "ok" = "ok";
+
+  try {
+    const sent = await sendPasswordSetupEmail({
+      recipient: {
+        email: user.email,
+        displayName: user.displayName,
+        locale: user.locale,
+      },
+      setupToken: token.rawToken,
+    });
+
+    if (sent) {
+      inviteMode = "sent";
+    }
+  } catch (error) {
+    console.error("Failed to resend password setup email", error);
+  }
+
+  redirect(
+    `${AUTH_ROUTES.home}?invite=${inviteMode}&email=${encodeURIComponent(user.email)}&setupToken=${encodeURIComponent(token.rawToken)}&by=${encodeURIComponent(currentUser.email)}`,
+  );
+}
+
 export async function revokeSessionAction(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("sessionId") || "");
