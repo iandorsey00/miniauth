@@ -26,6 +26,8 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - MiniAuth now reads those shared values back into root `data-theme` and `data-accent` attributes so its rendering model stays compatible with MiniTickets
 - MiniAuth now also owns shared workspace identity and shared workspace memberships so related apps can draw from one workspace list and one membership source
 - shared workspaces in MiniAuth intentionally stop at identity and membership truth; app-specific permissions and workspace behavior still belong in each downstream app
+- MiniAuth now includes a one-off MiniTickets workspace import script so existing MiniTickets `Workspace` and `WorkspaceMembership` rows can be copied into MiniAuth before downstream sync is enabled
+- the workspace import script maps memberships by `authUserId` first and email second, and it fails closed if any membership cannot be resolved to a MiniAuth user
 - MiniAuth now accepts a validated `returnTo` URL on login and MFA verification so trusted first-party apps can hand users back to their own post-login route instead of always landing on the MiniAuth dashboard
 - trusted post-login return origins should be declared explicitly through `ALLOWED_RETURN_TO_ORIGINS`; do not treat arbitrary redirect targets as valid
 - MiniAuth now also exposes a shared logout route so first-party apps can sign users out of the central session and then return them to the calling app's login screen

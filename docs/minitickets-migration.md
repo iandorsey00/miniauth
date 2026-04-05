@@ -15,10 +15,19 @@ MiniAuth should own:
 
 MiniTickets should keep owning:
 
-- workspaces
-- workspace membership and roles
 - ticket permissions
 - app-specific settings and behavior
+
+MiniAuth now also owns:
+
+- shared workspace identity
+- shared workspace memberships
+
+MiniTickets should now keep owning:
+
+- app-local workspace settings and behavior
+- ticket permissions
+- any app-specific authorization layered on top of shared membership truth
 
 ## Migration order
 
@@ -34,8 +43,11 @@ MiniTickets should keep owning:
 4. Begin issuing shared auth cookies from MiniAuth on the parent domain if the deployment domain layout allows it.
 5. Replace MiniTickets local sign-in routes with redirects to MiniAuth.
 6. Replace MiniTickets local session lookup with MiniAuth-backed identity lookup.
-7. Leave MiniTickets workspace membership checks unchanged.
-8. After stable production validation, retire MiniTickets-local password setup, login challenge, and session tables.
+7. Import existing MiniTickets workspaces and memberships into MiniAuth with the one-off migration script:
+   - `npm run migrate:minitickets-workspaces -- --source-db file:/var/www/minitickets/data/minitickets.db`
+8. Enable MiniTickets shared-workspace sync.
+9. Keep MiniTickets app-specific authorization local, but stop treating MiniTickets as the source of truth for shared workspace identity and membership.
+10. After stable production validation, retire MiniTickets-local password setup, login challenge, and session tables.
 
 ## Recommended MiniTickets code changes
 
@@ -57,7 +69,16 @@ Recommended steps:
 1. Add a stable `authUserId` field to the MiniTickets `User` model when you are ready for a stronger cross-app join.
 2. On each authenticated request, resolve the MiniAuth user first.
 3. Find or create the local MiniTickets user shell if needed.
-4. Continue loading workspace memberships from MiniTickets only.
+4. Continue loading app-specific authorization from MiniTickets, but let shared workspace shells and memberships sync from MiniAuth.
+
+## Workspace import notes
+
+- The workspace import script lives in MiniAuth and reads MiniTickets SQLite data directly.
+- It upserts workspaces by `slug`.
+- It maps memberships by `authUserId` first and email second.
+- It aborts if any membership cannot be mapped to a MiniAuth user.
+- It does not move MiniTickets-only settings such as ticket prefix, payment configuration, or product-specific behavior.
+- Run it after backing up both databases and before enabling `MINIAUTH_WORKSPACE_SYNC_ENABLED` in MiniTickets.
 
 ## Cookie and domain notes
 

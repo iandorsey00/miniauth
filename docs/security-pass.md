@@ -18,6 +18,7 @@ Scope reviewed:
 - trusted cross-app post-login redirects
 - trusted cross-app logout redirects
 - shared workspace and membership truth
+- one-off MiniTickets workspace import tooling
 - deployment and secret-handling defaults
 
 Changes made during the pass:
@@ -28,6 +29,7 @@ Changes made during the pass:
 - limited cross-app post-login redirects to MiniAuth-relative paths, MiniAuth itself, or explicitly allowlisted trusted origins
 - kept shared logout redirects on the same validated return-target path so sign-out does not introduce a separate open-redirect surface
 - kept shared workspace ownership limited to workspace identity and membership truth rather than moving downstream app authorization into MiniAuth
+- kept the one-off MiniTickets workspace import tool fail-closed by aborting on unresolved membership-user mappings instead of silently skipping or creating ambiguous membership records
 - kept shared preference cookies constrained to neutral value transport rather than shared CSS or UI implementation
 - kept cookie-driven root rendering limited to theme, accent, and locale presentation concerns rather than access control decisions
 - added send, resend, and verify rate-limited MFA handling with explicit send-failure cleanup
@@ -44,6 +46,7 @@ Open follow-ups:
 - consider whether login and invite mail delivery should share a single higher-level mail module once MiniAuth sends all auth emails directly
 - keep the trusted redirect-origin allowlist tight and first-party-only as additional apps join the shared-login family
 - consider a more explicit sync or webhook path if more downstream apps begin mirroring shared workspace state from MiniAuth
+- consider whether one-off workspace import tooling should later grow a dry-run mode or explicit reconciliation reporting if workspace sync becomes a recurring operational task
 
 Visual refresh note:
 

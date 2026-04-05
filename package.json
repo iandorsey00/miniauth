@@ -11,7 +11,8 @@
     "lint": "prisma generate && eslint .",
     "db:push": "prisma db push && prisma generate",
     "db:seed": "prisma db seed",
-    "bootstrap:admin": "node --experimental-strip-types scripts/bootstrap-admin.ts"
+    "bootstrap:admin": "node --experimental-strip-types scripts/bootstrap-admin.ts",
+    "migrate:minitickets-workspaces": "node --experimental-strip-types scripts/migrate-minitickets-workspaces.ts"
   },
   "prisma": {
     "seed": "node --experimental-strip-types prisma/seed.ts"
