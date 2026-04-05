@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { inviteUserAction, logoutAction, revokeSessionAction, seedSelfAccessAction, updateUserMfaAction } from "@/lib/actions";
+import {
+  assignWorkspaceMembershipAction,
+  createWorkspaceAction,
+  inviteUserAction,
+  logoutAction,
+  removeWorkspaceMembershipAction,
+  revokeSessionAction,
+  seedSelfAccessAction,
+  updateUserMfaAction,
+  updateWorkspaceAction,
+} from "@/lib/actions";
 import { requireUser } from "@/lib/auth";
 import { AUTH_ROUTES } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
@@ -22,7 +32,7 @@ function formatDate(value: Date | null) {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string }>;
+  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string; workspace?: string; membership?: string }>;
 }) {
   const user = await requireUser();
   const dictionary = getDictionary(user.locale);
@@ -43,11 +53,21 @@ export default async function HomePage({
     );
   }
 
-  const [users, sessions] = await Promise.all([
+  const [users, sessions, workspaces] = await Promise.all([
     prisma.user.findMany({
       include: {
         appAccess: {
           orderBy: [{ appKey: "asc" }],
+        },
+        memberships: {
+          include: {
+            workspace: true,
+          },
+          orderBy: {
+            workspace: {
+              name: "asc",
+            },
+          },
         },
       },
       orderBy: [{ createdAt: "asc" }],
@@ -63,6 +83,14 @@ export default async function HomePage({
         user: true,
       },
       orderBy: [{ createdAt: "desc" }],
+    }),
+    prisma.workspace.findMany({
+      include: {
+        memberships: {
+          include: { user: true },
+        },
+      },
+      orderBy: [{ name: "asc" }],
     }),
   ]);
 
@@ -124,6 +152,18 @@ export default async function HomePage({
         </section>
       ) : null}
 
+      {params.workspace === "saved" ? (
+        <section className="panel message-panel success-panel">
+          {dictionary.dashboard.workspaces} saved.
+        </section>
+      ) : null}
+
+      {params.membership === "updated" ? (
+        <section className="panel message-panel success-panel">
+          {dictionary.common.membershipManagedInMiniAuth}
+        </section>
+      ) : null}
+
       <section className="overview-grid">
         <div className="overview-card">
           <span className="overview-label">Active accounts</span>
@@ -136,6 +176,10 @@ export default async function HomePage({
         <div className="overview-card">
           <span className="overview-label">Pending without password</span>
           <strong>{users.filter((account) => !account.passwordHash).length}</strong>
+        </div>
+        <div className="overview-card">
+          <span className="overview-label">{dictionary.dashboard.workspaces}</span>
+          <strong>{workspaces.length}</strong>
         </div>
       </section>
 
@@ -248,6 +292,24 @@ export default async function HomePage({
                     <p className="empty-state">{dictionary.dashboard.noAccess}</p>
                   )}
                 </div>
+                <div className="access-list">
+                  {account.memberships.length ? (
+                    account.memberships.map((membership) => (
+                      <form action={removeWorkspaceMembershipAction} className="inline-form" key={membership.id}>
+                        <input name="userId" type="hidden" value={account.id} />
+                        <input name="workspaceId" type="hidden" value={membership.workspaceId} />
+                        <div className="pill">
+                          {membership.workspace.name} · {membership.role}
+                        </div>
+                        <button className="ghost-button" type="submit">
+                          Remove
+                        </button>
+                      </form>
+                    ))
+                  ) : (
+                    <p className="empty-state">{dictionary.dashboard.noWorkspaces}</p>
+                  )}
+                </div>
                 <div className="account-actions">
                   <form action={updateUserMfaAction}>
                     <input name="userId" type="hidden" value={account.id} />
@@ -256,12 +318,107 @@ export default async function HomePage({
                       {account.emailMfaEnabled ? dictionary.auth.disableMfa : dictionary.auth.enableMfa}
                     </button>
                   </form>
+                  {workspaces.some(
+                    (workspace) => !account.memberships.some((membership) => membership.workspaceId === workspace.id),
+                  ) ? (
+                    <form action={assignWorkspaceMembershipAction}>
+                      <input name="userId" type="hidden" value={account.id} />
+                      <select name="workspaceId" defaultValue={workspaces.find(
+                        (workspace) => !account.memberships.some((membership) => membership.workspaceId === workspace.id),
+                      )?.id}>
+                        {workspaces
+                          .filter((workspace) => !account.memberships.some((membership) => membership.workspaceId === workspace.id))
+                          .map((workspace) => (
+                            <option key={workspace.id} value={workspace.id}>
+                              {workspace.name}
+                            </option>
+                          ))}
+                      </select>
+                      <select name="role" defaultValue="MEMBER">
+                        <option value="MEMBER">MEMBER</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                      <button className="ghost-button" type="submit">
+                        Add workspace
+                      </button>
+                    </form>
+                  ) : null}
                 </div>
               </article>
             ))
           ) : (
             <p className="empty-state">{dictionary.dashboard.noUsers}</p>
           )}
+        </div>
+      </section>
+
+      <section className="grid">
+        <div className="panel panel-strong">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">{dictionary.dashboard.workspaces}</p>
+              <h2>{dictionary.dashboard.workspaces}</h2>
+              <p>{dictionary.dashboard.workspaceSubtitle}</p>
+            </div>
+          </div>
+          <form className="stack" action={createWorkspaceAction}>
+            <div className="field">
+              <label htmlFor="workspace-name">{dictionary.common.title}</label>
+              <input id="workspace-name" name="name" required />
+            </div>
+            <div className="field">
+              <label htmlFor="workspace-slug">{dictionary.common.slug}</label>
+              <input id="workspace-slug" name="slug" required />
+            </div>
+            <div className="field">
+              <label htmlFor="workspace-description">{dictionary.common.description}</label>
+              <textarea id="workspace-description" name="description" />
+            </div>
+            <button type="submit">{dictionary.common.create}</button>
+          </form>
+        </div>
+
+        <div className="panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">{dictionary.dashboard.workspaces}</p>
+              <h2>{dictionary.dashboard.workspaces}</h2>
+            </div>
+          </div>
+          <div className="stack">
+            {workspaces.length ? (
+              workspaces.map((workspace) => (
+                <article className="list-card" key={workspace.id}>
+                  <form className="stack" action={updateWorkspaceAction}>
+                    <input name="workspaceId" type="hidden" value={workspace.id} />
+                    <div className="field">
+                      <label htmlFor={`workspace-name-${workspace.id}`}>{dictionary.common.title}</label>
+                      <input id={`workspace-name-${workspace.id}`} name="name" defaultValue={workspace.name} required />
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`workspace-slug-${workspace.id}`}>{dictionary.common.slug}</label>
+                      <input id={`workspace-slug-${workspace.id}`} name="slug" defaultValue={workspace.slug} required />
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`workspace-description-${workspace.id}`}>{dictionary.common.description}</label>
+                      <textarea id={`workspace-description-${workspace.id}`} name="description" defaultValue={workspace.description ?? ""} />
+                    </div>
+                    <label className="toggle-row">
+                      <span>{dictionary.common.archived}</span>
+                      <input name="isArchived" type="checkbox" defaultChecked={workspace.isArchived} />
+                    </label>
+                    <div className="meta-grid">
+                      <span><strong>{dictionary.common.members}</strong><br />{workspace.memberships.length}</span>
+                      <span><strong>{dictionary.common.createdAt}</strong><br />{formatDate(workspace.createdAt)}</span>
+                    </div>
+                    <button className="ghost-button" type="submit">{dictionary.common.save}</button>
+                  </form>
+                </article>
+              ))
+            ) : (
+              <p className="empty-state">{dictionary.dashboard.noWorkspaces}</p>
+            )}
+          </div>
         </div>
       </section>
     </main>

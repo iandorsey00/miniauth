@@ -40,6 +40,11 @@ enum AppAccessState {
   INACTIVE
 }
 
+enum WorkspaceRole {
+  ADMIN
+  MEMBER
+}
+
 model User {
   id                  String                @id @default(cuid())
   email               String                @unique
@@ -57,6 +62,7 @@ model User {
   passwordSetupTokens PasswordSetupToken[]
   loginEmailChallenges LoginEmailChallenge[]
   appAccess           AppAccess[]
+  memberships         WorkspaceMembership[]
 }
 
 model Session {
@@ -123,4 +129,30 @@ model AppAccess {
 
   @@unique([userId, appKey])
   @@index([appKey, state])
+}
+
+model Workspace {
+  id          String                @id @default(cuid())
+  slug        String                @unique
+  name        String
+  description String?
+  isArchived  Boolean               @default(false)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  memberships WorkspaceMembership[]
+
+  @@index([name, isArchived])
+}
+
+model WorkspaceMembership {
+  id          String        @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now())
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId, role])
 }

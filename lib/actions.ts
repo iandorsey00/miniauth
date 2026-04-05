@@ -2,7 +2,7 @@
 
 import crypto from "node:crypto";
 
-import { Locale } from "@prisma/client";
+import { Locale, WorkspaceRole } from "@prisma/client";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -47,6 +47,18 @@ const inviteSchema = z.object({
   locale: z.nativeEnum(Locale),
   emailMfaEnabled: z.boolean().optional(),
   appKey: z.string().trim().min(2).max(40),
+});
+
+const workspaceSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9-]+$/),
+  description: z.string().trim().max(240).optional(),
+});
+
+const workspaceMembershipSchema = z.object({
+  userId: z.string().min(1),
+  workspaceId: z.string().min(1),
+  role: z.nativeEnum(WorkspaceRole),
 });
 
 async function getClientIp() {
@@ -339,6 +351,110 @@ export async function updateUserMfaAction(formData: FormData) {
   });
 
   redirect(`${AUTH_ROUTES.home}?mfa=updated`);
+}
+
+export async function createWorkspaceAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = workspaceSchema.safeParse({
+    name: formData.get("name"),
+    slug: String(formData.get("slug") ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-"),
+    description: String(formData.get("description") ?? "").trim(),
+  });
+
+  if (!parsed.success) {
+    redirect(`${AUTH_ROUTES.home}?workspace=invalid`);
+  }
+
+  await prisma.workspace.create({
+    data: {
+      name: parsed.data.name,
+      slug: parsed.data.slug,
+      description: parsed.data.description || null,
+    },
+  });
+
+  redirect(`${AUTH_ROUTES.home}?workspace=saved`);
+}
+
+export async function updateWorkspaceAction(formData: FormData) {
+  await requireAdmin();
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const parsed = workspaceSchema.safeParse({
+    name: formData.get("name"),
+    slug: String(formData.get("slug") ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-"),
+    description: String(formData.get("description") ?? "").trim(),
+  });
+
+  if (!workspaceId || !parsed.success) {
+    redirect(`${AUTH_ROUTES.home}?workspace=invalid`);
+  }
+
+  await prisma.workspace.update({
+    where: { id: workspaceId },
+    data: {
+      name: parsed.data.name,
+      slug: parsed.data.slug,
+      description: parsed.data.description || null,
+      isArchived: formData.get("isArchived") === "on",
+    },
+  });
+
+  redirect(`${AUTH_ROUTES.home}?workspace=saved`);
+}
+
+export async function assignWorkspaceMembershipAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = workspaceMembershipSchema.safeParse({
+    userId: formData.get("userId"),
+    workspaceId: formData.get("workspaceId"),
+    role: formData.get("role"),
+  });
+
+  if (!parsed.success) {
+    redirect(`${AUTH_ROUTES.home}?membership=invalid`);
+  }
+
+  await prisma.workspaceMembership.upsert({
+    where: {
+      userId_workspaceId: {
+        userId: parsed.data.userId,
+        workspaceId: parsed.data.workspaceId,
+      },
+    },
+    update: { role: parsed.data.role },
+    create: {
+      userId: parsed.data.userId,
+      workspaceId: parsed.data.workspaceId,
+      role: parsed.data.role,
+    },
+  });
+
+  redirect(`${AUTH_ROUTES.home}?membership=updated`);
+}
+
+export async function removeWorkspaceMembershipAction(formData: FormData) {
+  await requireAdmin();
+  const userId = String(formData.get("userId") ?? "");
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+
+  if (!userId || !workspaceId) {
+    redirect(`${AUTH_ROUTES.home}?membership=invalid`);
+  }
+
+  await prisma.workspaceMembership.deleteMany({
+    where: {
+      userId,
+      workspaceId,
+    },
+  });
+
+  redirect(`${AUTH_ROUTES.home}?membership=updated`);
 }
 
 export async function seedSelfAccessAction() {

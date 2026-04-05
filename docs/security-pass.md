@@ -17,6 +17,7 @@ Scope reviewed:
 - admin-only MFA toggle for existing users
 - trusted cross-app post-login redirects
 - trusted cross-app logout redirects
+- shared workspace and membership truth
 - deployment and secret-handling defaults
 
 Changes made during the pass:
@@ -26,6 +27,7 @@ Changes made during the pass:
 - limited existing-user MFA toggles to MiniAuth admins
 - limited cross-app post-login redirects to MiniAuth-relative paths, MiniAuth itself, or explicitly allowlisted trusted origins
 - kept shared logout redirects on the same validated return-target path so sign-out does not introduce a separate open-redirect surface
+- kept shared workspace ownership limited to workspace identity and membership truth rather than moving downstream app authorization into MiniAuth
 - kept shared preference cookies constrained to neutral value transport rather than shared CSS or UI implementation
 - kept cookie-driven root rendering limited to theme, accent, and locale presentation concerns rather than access control decisions
 - added send, resend, and verify rate-limited MFA handling with explicit send-failure cleanup
@@ -41,6 +43,7 @@ Open follow-ups:
 - consider a dedicated shared-preferences update surface so apps do not need to mutate parent-domain cookies independently
 - consider whether login and invite mail delivery should share a single higher-level mail module once MiniAuth sends all auth emails directly
 - keep the trusted redirect-origin allowlist tight and first-party-only as additional apps join the shared-login family
+- consider a more explicit sync or webhook path if more downstream apps begin mirroring shared workspace state from MiniAuth
 
 Visual refresh note:
 

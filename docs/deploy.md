@@ -49,10 +49,11 @@ Prefer the deploy script over ad hoc shell history:
 
 The script expects a server-local env file path and will:
 
-- install exact dependencies with `npm ci`
+- install exact dependencies with `npm ci --include=dev`
 - build the app
 - push the Prisma schema
 - restart the systemd service
+- optionally run a final health check if `MINIAUTH_HEALTHCHECK_URL` is set
 
 ## Health check
 
@@ -83,3 +84,9 @@ If a release fails after checkout:
 5. Restart the service.
 
 For safety, take a database backup before schema-changing releases.
+
+## Example command
+
+Use the standard service name and production env file:
+
+`MINIAUTH_ENV_FILE=.env.production MINIAUTH_SERVICE_NAME=miniauth MINIAUTH_HEALTHCHECK_URL=https://your-auth-host/api/health bash scripts/deploy.sh`
