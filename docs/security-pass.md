@@ -15,6 +15,7 @@ Scope reviewed:
 - cookie-driven root theme and accent rendering compatibility
 - Resend-backed MFA email delivery and login feedback-state restoration
 - admin-only MFA toggle for existing users
+- trusted cross-app post-login redirects
 - deployment and secret-handling defaults
 
 Changes made during the pass:
@@ -22,6 +23,7 @@ Changes made during the pass:
 - removed MFA code leakage through redirect query parameters
 - limited invite and session-revocation actions to MiniAuth admins
 - limited existing-user MFA toggles to MiniAuth admins
+- limited cross-app post-login redirects to MiniAuth-relative paths, MiniAuth itself, or explicitly allowlisted trusted origins
 - kept shared preference cookies constrained to neutral value transport rather than shared CSS or UI implementation
 - kept cookie-driven root rendering limited to theme, accent, and locale presentation concerns rather than access control decisions
 - added send, resend, and verify rate-limited MFA handling with explicit send-failure cleanup
@@ -36,6 +38,7 @@ Open follow-ups:
 - consider a dedicated signed identity handoff endpoint for MiniTickets integration if shared cookies are not practical
 - consider a dedicated shared-preferences update surface so apps do not need to mutate parent-domain cookies independently
 - consider whether login and invite mail delivery should share a single higher-level mail module once MiniAuth sends all auth emails directly
+- keep the trusted redirect-origin allowlist tight and first-party-only as additional apps join the shared-login family
 
 Visual refresh note:
 

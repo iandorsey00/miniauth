@@ -5,9 +5,17 @@ function intFromEnv(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function listFromEnv(value: string | undefined) {
+  return (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 export const env = {
   appName: process.env.APP_NAME || "MiniAuth",
   baseUrl: process.env.BASE_URL || "http://localhost:3000",
+  allowedReturnToOrigins: listFromEnv(process.env.ALLOWED_RETURN_TO_ORIGINS),
   defaultLocale: DEFAULT_LOCALE,
   sessionDays: intFromEnv(process.env.SESSION_DAYS, 14),
   loginCodeMinutes: intFromEnv(process.env.LOGIN_CODE_MINUTES, 10),

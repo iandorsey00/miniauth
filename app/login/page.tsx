@@ -10,7 +10,7 @@ import { getDictionary } from "@/lib/i18n";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; setup?: string }>;
+  searchParams: Promise<{ error?: string; setup?: string; returnTo?: string }>;
 }) {
   const user = await getCurrentUser();
   if (user) {
@@ -21,6 +21,7 @@ export default async function LoginPage({
   const locale = (cookieStore.get(env.sharedLocaleCookieName)?.value || env.defaultLocale).toUpperCase();
   const dictionary = getDictionary(locale === "ZH_CN" ? "ZH_CN" : "EN");
   const params = await searchParams;
+  const returnTo = typeof params.returnTo === "string" ? params.returnTo : "";
   const errorMessage =
     params.error === "inactive"
       ? dictionary.auth.inactive
@@ -52,6 +53,7 @@ export default async function LoginPage({
             {params.setup === "1" ? <div className="badge badge-success">Password set. You can sign in now.</div> : null}
             {errorMessage ? <div className="badge badge-danger">{errorMessage}</div> : null}
             <form action={loginAction}>
+              {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
               <div className="field">
                 <label htmlFor="email">{dictionary.auth.email}</label>
                 <input id="email" name="email" type="email" autoComplete="email" required />

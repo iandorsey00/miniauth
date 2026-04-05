@@ -18,7 +18,7 @@ function maskEmail(email: string) {
 export default async function VerifyLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; sent?: string }>;
+  searchParams: Promise<{ error?: string; sent?: string; returnTo?: string }>;
 }) {
   const user = await getCurrentUser();
   if (user) {
@@ -31,6 +31,7 @@ export default async function VerifyLoginPage({
   }
 
   const params = await searchParams;
+  const returnTo = typeof params.returnTo === "string" ? params.returnTo : "";
   const dictionary = getDictionary(challenge.user.locale);
   const previewCode = await getPendingLoginPreviewCode();
   const errorMessage =
@@ -63,6 +64,7 @@ export default async function VerifyLoginPage({
           ) : null}
           {errorMessage ? <div className="error-note">{errorMessage}</div> : null}
           <form className="stack" action={verifyLoginCodeAction}>
+            {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
             <div className="field">
               <label htmlFor="code">{dictionary.auth.verificationCode}</label>
               <input id="code" name="code" type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required />
@@ -70,6 +72,7 @@ export default async function VerifyLoginPage({
             <button type="submit">{dictionary.auth.verifySubmit}</button>
           </form>
           <form action={resendLoginCodeAction}>
+            {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
             <button className="ghost-button full-width" type="submit">
               {dictionary.auth.resendCode}
             </button>

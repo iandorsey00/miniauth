@@ -23,6 +23,7 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { createPasswordSetupToken, hashPasswordSetupToken } from "@/lib/password-setup";
 import { prisma } from "@/lib/prisma";
 import { assertRateLimit, clearRateLimit } from "@/lib/rate-limit";
+import { buildRedirectTarget, getPostLoginRedirectTarget, getValidatedReturnTo } from "@/lib/return-to";
 import { sha256 } from "@/lib/tokens";
 
 const loginSchema = z.object({
@@ -58,13 +59,14 @@ async function getClientIp() {
 }
 
 export async function loginAction(formData: FormData) {
+  const returnTo = getValidatedReturnTo(formData.get("returnTo"));
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    redirect(`${AUTH_ROUTES.login}?error=invalid`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.login, returnTo, new URLSearchParams({ error: "invalid" })));
   }
 
   const email = parsed.data.email.trim().toLowerCase();
@@ -73,7 +75,7 @@ export async function loginAction(formData: FormData) {
   try {
     await assertRateLimit("login", `${email}|${clientIp}`, 5);
   } catch {
-    redirect(`${AUTH_ROUTES.login}?error=rate_limited`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.login, returnTo, new URLSearchParams({ error: "rate_limited" })));
   }
 
   const user = await prisma.user.findUnique({
@@ -81,12 +83,18 @@ export async function loginAction(formData: FormData) {
   });
 
   if (!user || !user.passwordHash || !user.isActive) {
-    redirect(`${AUTH_ROUTES.login}?error=${user && !user.isActive ? "inactive" : "invalid"}`);
+    redirect(
+      buildRedirectTarget(
+        AUTH_ROUTES.login,
+        returnTo,
+        new URLSearchParams({ error: user && !user.isActive ? "inactive" : "invalid" }),
+      ),
+    );
   }
 
   const validPassword = await verifyPassword(parsed.data.password, user.passwordHash);
   if (!validPassword) {
-    redirect(`${AUTH_ROUTES.login}?error=invalid`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.login, returnTo, new URLSearchParams({ error: "invalid" })));
   }
 
   if (user.emailMfaEnabled) {
@@ -103,11 +111,11 @@ export async function loginAction(formData: FormData) {
     } catch (error) {
       console.error("Failed to send login verification code", error);
       await clearLoginChallenge();
-      redirect(`${AUTH_ROUTES.login}?error=mfa_send`);
+      redirect(buildRedirectTarget(AUTH_ROUTES.login, returnTo, new URLSearchParams({ error: "mfa_send" })));
     }
 
     await clearRateLimit("login", `${email}|${clientIp}`);
-    redirect(`${AUTH_ROUTES.verify}?sent=1`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ sent: "1" })));
   }
 
   await startSession(user.id);
@@ -116,27 +124,28 @@ export async function loginAction(formData: FormData) {
     where: { id: user.id },
     data: { lastLoginAt: new Date() },
   });
-  redirect(AUTH_ROUTES.home);
+  redirect(getPostLoginRedirectTarget(returnTo));
 }
 
 export async function verifyLoginCodeAction(formData: FormData) {
+  const returnTo = getValidatedReturnTo(formData.get("returnTo"));
   const parsed = verifyLoginSchema.safeParse({
     code: formData.get("code"),
   });
 
   const challenge = await getPendingLoginChallenge();
   if (!parsed.success || !challenge) {
-    redirect(`${AUTH_ROUTES.verify}?error=expired`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "expired" })));
   }
 
   try {
     await assertRateLimit("login_mfa_verify", `${challenge.tokenHash}|${await getClientIp()}`, 5);
   } catch {
-    redirect(`${AUTH_ROUTES.verify}?error=expired`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "expired" })));
   }
 
   if (challenge.codeHash !== sha256(parsed.data.code)) {
-    redirect(`${AUTH_ROUTES.verify}?error=invalid`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "invalid" })));
   }
 
   await prisma.loginEmailChallenge.update({
@@ -152,20 +161,21 @@ export async function verifyLoginCodeAction(formData: FormData) {
     data: { lastLoginAt: new Date() },
   });
 
-  redirect(AUTH_ROUTES.home);
+  redirect(getPostLoginRedirectTarget(returnTo));
 }
 
-export async function resendLoginCodeAction() {
+export async function resendLoginCodeAction(formData: FormData) {
+  const returnTo = getValidatedReturnTo(formData.get("returnTo"));
   const challenge = await getPendingLoginChallenge();
 
   if (!challenge) {
-    redirect(`${AUTH_ROUTES.login}?error=invalid`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.login, returnTo, new URLSearchParams({ error: "invalid" })));
   }
 
   try {
     await assertRateLimit("login_mfa_send", `${challenge.userId}|${await getClientIp()}`, 3);
   } catch {
-    redirect(`${AUTH_ROUTES.verify}?error=expired`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "expired" })));
   }
 
   try {
@@ -181,10 +191,10 @@ export async function resendLoginCodeAction() {
   } catch (error) {
     console.error("Failed to resend login verification code", error);
     await clearLoginChallenge();
-    redirect(`${AUTH_ROUTES.verify}?error=invalid`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "invalid" })));
   }
 
-  redirect(`${AUTH_ROUTES.verify}?sent=1`);
+  redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ sent: "1" })));
 }
 
 export async function setupPasswordAction(formData: FormData) {
