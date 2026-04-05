@@ -353,6 +353,35 @@ export async function updateUserMfaAction(formData: FormData) {
   redirect(`${AUTH_ROUTES.home}?mfa=updated`);
 }
 
+export async function updateUserActiveAction(formData: FormData) {
+  await requireAdmin();
+  const userId = String(formData.get("userId") || "");
+  const enabled = String(formData.get("enabled") || "") === "1";
+
+  if (!userId) {
+    redirect(`${AUTH_ROUTES.home}?account=invalid`);
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { isActive: enabled },
+  });
+
+  if (!enabled) {
+    await prisma.$transaction([
+      prisma.session.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+      prisma.loginEmailChallenge.deleteMany({
+        where: { userId },
+      }),
+    ]);
+  }
+
+  redirect(`${AUTH_ROUTES.home}?account=updated`);
+}
+
 export async function createWorkspaceAction(formData: FormData) {
   await requireAdmin();
   const parsed = workspaceSchema.safeParse({

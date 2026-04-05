@@ -9,6 +9,7 @@ import {
   removeWorkspaceMembershipAction,
   revokeSessionAction,
   seedSelfAccessAction,
+  updateUserActiveAction,
   updateUserMfaAction,
   updateWorkspaceAction,
 } from "@/lib/actions";
@@ -32,7 +33,7 @@ function formatDate(value: Date | null) {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string; workspace?: string; membership?: string }>;
+  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string; account?: string; workspace?: string; membership?: string }>;
 }) {
   const user = await requireUser();
   const dictionary = getDictionary(user.locale);
@@ -149,6 +150,12 @@ export default async function HomePage({
       {params.mfa === "updated" ? (
         <section className="panel message-panel success-panel">
           {dictionary.auth.mfaUpdated}
+        </section>
+      ) : null}
+
+      {params.account === "updated" ? (
+        <section className="panel message-panel success-panel">
+          Account status updated.
         </section>
       ) : null}
 
@@ -311,6 +318,13 @@ export default async function HomePage({
                   )}
                 </div>
                 <div className="account-actions">
+                  <form action={updateUserActiveAction}>
+                    <input name="userId" type="hidden" value={account.id} />
+                    <input name="enabled" type="hidden" value={account.isActive ? "0" : "1"} />
+                    <button className="ghost-button" type="submit">
+                      {account.isActive ? dictionary.common.disable : dictionary.common.enable}
+                    </button>
+                  </form>
                   <form action={updateUserMfaAction}>
                     <input name="userId" type="hidden" value={account.id} />
                     <input name="enabled" type="hidden" value={account.emailMfaEnabled ? "0" : "1"} />

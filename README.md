@@ -34,6 +34,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - Invite flow creates a password setup link for you to send through your own email workflow.
 - App-local authorization is intentionally left to downstream apps; MiniAuth owns identity and session basics.
 - Existing accounts can now have email MFA enabled or disabled directly from the MiniAuth admin dashboard.
+- Existing accounts can now also be enabled or disabled directly from the MiniAuth admin dashboard; disabling an account revokes its live MiniAuth sessions so downstream apps stop treating it as an active user.
 - MiniAuth now carries shared preference values for locale, theme, and accent, and issues neutral shared cookies for downstream apps on the same parent domain.
 - MiniAuth now also renders with MiniTickets-compatible `data-theme` and `data-accent` root attributes so the same shared preference values drive a compatible family look.
 - MiniAuth now also owns shared workspace identity and workspace membership truth for connected apps, without taking over app-specific ticket or product authorization.

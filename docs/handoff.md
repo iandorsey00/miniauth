@@ -22,6 +22,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - the first real admin should be created deliberately during deploy bootstrap
 - MFA email delivery is now wired through Resend when configured; development can still fall back to the on-page preview code flow
 - existing users can now have email MFA enabled or disabled directly from the MiniAuth admin dashboard without reusing the invite path
+- existing users can now also be enabled or disabled directly from the MiniAuth admin dashboard, and disabling a user revokes active MiniAuth sessions so downstream apps see the account as inactive immediately
 - MiniAuth now stores shared `locale`, `themePreference`, and `accentColor` values and writes neutral shared cookies for compatible apps on the same parent domain
 - MiniAuth now reads those shared values back into root `data-theme` and `data-accent` attributes so its rendering model stays compatible with MiniTickets
 - MiniAuth now also owns shared workspace identity and shared workspace memberships so related apps can draw from one workspace list and one membership source

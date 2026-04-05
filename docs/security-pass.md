@@ -15,6 +15,7 @@ Scope reviewed:
 - cookie-driven root theme and accent rendering compatibility
 - Resend-backed MFA email delivery and login feedback-state restoration
 - admin-only MFA toggle for existing users
+- admin-only account enable/disable control for existing users
 - trusted cross-app post-login redirects
 - trusted cross-app logout redirects
 - shared workspace and membership truth
@@ -26,6 +27,7 @@ Changes made during the pass:
 - removed MFA code leakage through redirect query parameters
 - limited invite and session-revocation actions to MiniAuth admins
 - limited existing-user MFA toggles to MiniAuth admins
+- limited existing-user enable/disable control to MiniAuth admins and revoked active shared sessions on disable so inactive accounts cannot continue through stale MiniAuth sessions
 - limited cross-app post-login redirects to MiniAuth-relative paths, MiniAuth itself, or explicitly allowlisted trusted origins
 - kept shared logout redirects on the same validated return-target path so sign-out does not introduce a separate open-redirect surface
 - kept shared workspace ownership limited to workspace identity and membership truth rather than moving downstream app authorization into MiniAuth
