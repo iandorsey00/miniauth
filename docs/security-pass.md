@@ -19,6 +19,7 @@ Scope reviewed:
 - bootstrap-only self-seed admin path
 - trusted cross-app post-login redirects
 - trusted cross-app logout redirects
+- non-admin shared-preferences update surface
 - shared workspace and membership truth
 - one-off MiniTickets workspace import tooling
 - deployment and secret-handling defaults
@@ -32,6 +33,7 @@ Changes made during the pass:
 - limited the self-seed admin path to the true bootstrap case only, so once any active MiniAuth admin exists, ordinary invited users can no longer grant themselves admin access
 - limited cross-app post-login redirects to MiniAuth-relative paths, MiniAuth itself, or explicitly allowlisted trusted origins
 - kept shared logout redirects on the same validated return-target path so sign-out does not introduce a separate open-redirect surface
+- limited the new non-admin preferences surface to shared locale, theme, and accent updates only, with no user-management or app-access mutation capability exposed outside MiniAuth admins
 - kept shared workspace ownership limited to workspace identity and membership truth rather than moving downstream app authorization into MiniAuth
 - kept the one-off MiniTickets workspace import tool fail-closed by aborting on unresolved membership-user mappings instead of silently skipping or creating ambiguous membership records
 - kept shared preference cookies constrained to neutral value transport rather than shared CSS or UI implementation

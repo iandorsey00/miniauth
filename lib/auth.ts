@@ -36,6 +36,15 @@ async function applySharedPreferenceCookies(preferences: {
   cookieStore.set(env.sharedAccentCookieName, toCookieValue(preferences.accentColor), cookieOptions);
 }
 
+export async function refreshSharedPreferenceCookies(preferences: {
+  locale: Locale;
+  themePreference: ThemePreference;
+  accentColor: AccentColor;
+}) {
+  const expiresAt = new Date(Date.now() + env.sessionDays * 24 * 60 * 60 * 1000);
+  await applySharedPreferenceCookies(preferences, expiresAt);
+}
+
 async function clearSharedPreferenceCookies() {
   const cookieStore = await cookies();
   cookieStore.delete(env.sharedLocaleCookieName);

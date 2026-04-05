@@ -38,6 +38,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - Existing accounts can now also be enabled or disabled directly from the MiniAuth admin dashboard; disabling an account revokes its live MiniAuth sessions so downstream apps stop treating it as an active user.
 - MiniAuth now carries shared preference values for locale, theme, and accent, and issues neutral shared cookies for downstream apps on the same parent domain.
 - MiniAuth now also renders with MiniTickets-compatible `data-theme` and `data-accent` root attributes so the same shared preference values drive a compatible family look.
+- Signed-in non-admin users now get a small MiniAuth account-preferences surface for shared locale, theme, and accent management instead of a dead-end dashboard screen.
 - MiniAuth now also owns shared workspace identity and workspace membership truth for connected apps, without taking over app-specific ticket or product authorization.
 - MiniAuth now includes a one-off MiniTickets workspace import script so existing shared workspaces and memberships can be copied into MiniAuth before downstream apps switch to synced workspace truth.
 - The current UI uses a calmer auth layout, and the sign-in page keeps a minimal structure while still surfacing important sign-in feedback such as inactive-account, invalid-login, rate-limit, MFA-send, and password-setup success states.

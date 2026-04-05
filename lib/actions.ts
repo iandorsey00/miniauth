@@ -2,7 +2,7 @@
 
 import crypto from "node:crypto";
 
-import { Locale, WorkspaceRole } from "@prisma/client";
+import { AccentColor, Locale, ThemePreference, WorkspaceRole } from "@prisma/client";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -13,6 +13,7 @@ import {
   destroySession,
   getCurrentUser,
   getPendingLoginChallenge,
+  refreshSharedPreferenceCookies,
   requireAdmin,
   requireUser,
   startSession,
@@ -59,6 +60,12 @@ const workspaceMembershipSchema = z.object({
   userId: z.string().min(1),
   workspaceId: z.string().min(1),
   role: z.nativeEnum(WorkspaceRole),
+});
+
+const selfPreferencesSchema = z.object({
+  locale: z.nativeEnum(Locale),
+  themePreference: z.nativeEnum(ThemePreference),
+  accentColor: z.nativeEnum(AccentColor),
 });
 
 async function getClientIp() {
@@ -254,6 +261,36 @@ export async function setupPasswordAction(formData: FormData) {
 export async function logoutAction() {
   await destroySession();
   redirect(AUTH_ROUTES.login);
+}
+
+export async function updateSelfPreferencesAction(formData: FormData) {
+  const user = await requireUser();
+  const parsed = selfPreferencesSchema.safeParse({
+    locale: formData.get("locale"),
+    themePreference: formData.get("themePreference"),
+    accentColor: formData.get("accentColor"),
+  });
+
+  if (!parsed.success) {
+    redirect(`${AUTH_ROUTES.home}?preferences=invalid`);
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      locale: parsed.data.locale,
+      themePreference: parsed.data.themePreference,
+      accentColor: parsed.data.accentColor,
+    },
+  });
+
+  await refreshSharedPreferenceCookies({
+    locale: parsed.data.locale,
+    themePreference: parsed.data.themePreference,
+    accentColor: parsed.data.accentColor,
+  });
+
+  redirect(`${AUTH_ROUTES.home}?preferences=saved`);
 }
 
 export async function inviteUserAction(formData: FormData) {

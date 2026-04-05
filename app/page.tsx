@@ -12,6 +12,7 @@ import {
   seedSelfAccessAction,
   updateUserActiveAction,
   updateUserMfaAction,
+  updateSelfPreferencesAction,
   updateWorkspaceAction,
 } from "@/lib/actions";
 import { requireUser } from "@/lib/auth";
@@ -19,6 +20,22 @@ import { AUTH_ROUTES } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
 import { buildSetupLink } from "@/lib/links";
 import { prisma } from "@/lib/prisma";
+
+const localeValues = ["EN", "ZH_CN"] as const;
+const themeValues = ["SYSTEM", "LIGHT", "DARK"] as const;
+const accentValues = ["BLUE", "CYAN", "TEAL", "GREEN", "LIME", "YELLOW", "ORANGE", "RED", "PINK", "PURPLE"] as const;
+const accentLabelMap = {
+  BLUE: { EN: "Blue", ZH_CN: "蓝色" },
+  CYAN: { EN: "Cyan", ZH_CN: "青色" },
+  TEAL: { EN: "Teal", ZH_CN: "蓝绿" },
+  GREEN: { EN: "Green", ZH_CN: "绿色" },
+  LIME: { EN: "Lime", ZH_CN: "黄绿" },
+  YELLOW: { EN: "Yellow", ZH_CN: "黄色" },
+  ORANGE: { EN: "Orange", ZH_CN: "橙色" },
+  RED: { EN: "Red", ZH_CN: "红色" },
+  PINK: { EN: "Pink", ZH_CN: "粉色" },
+  PURPLE: { EN: "Purple", ZH_CN: "紫色" },
+} as const;
 
 function formatDate(value: Date | null) {
   if (!value) {
@@ -34,7 +51,7 @@ function formatDate(value: Date | null) {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string; account?: string; workspace?: string; membership?: string }>;
+  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string; account?: string; preferences?: string; workspace?: string; membership?: string }>;
 }) {
   const user = await requireUser();
   const dictionary = getDictionary(user.locale);
@@ -50,7 +67,62 @@ export default async function HomePage({
 
   if (!user.appAccess.some((item) => item.appKey === "miniauth")) {
     if (!canBootstrapSelf) {
-      redirect(AUTH_ROUTES.login);
+      return (
+        <main className="shell">
+          <section className="panel hero">
+            <p className="eyebrow">{dictionary.appName}</p>
+            <h1>{dictionary.dashboard.preferencesTitle}</h1>
+            <p>{dictionary.dashboard.preferencesSubtitle}</p>
+            {params.preferences === "saved" ? (
+              <section className="panel message-panel success-panel">
+                Preferences updated.
+              </section>
+            ) : null}
+            <form className="stack" action={updateSelfPreferencesAction}>
+              <div className="field">
+                <label htmlFor="locale">{dictionary.common.language}</label>
+                <select id="locale" name="locale" defaultValue={user.locale}>
+                  {localeValues.map((locale) => (
+                    <option key={locale} value={locale}>
+                      {locale === "ZH_CN" ? "简体中文" : "English"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="themePreference">{dictionary.common.theme}</label>
+                <select id="themePreference" name="themePreference" defaultValue={user.themePreference}>
+                  {themeValues.map((theme) => (
+                    <option key={theme} value={theme}>
+                      {theme === "LIGHT"
+                        ? dictionary.common.light
+                        : theme === "DARK"
+                          ? dictionary.common.dark
+                          : dictionary.common.system}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="accentColor">{dictionary.common.accentColor}</label>
+                <select id="accentColor" name="accentColor" defaultValue={user.accentColor}>
+                  {accentValues.map((accent) => (
+                    <option key={accent} value={accent}>
+                      {accentLabelMap[accent][user.locale]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button type="submit">{dictionary.common.save}</button>
+            </form>
+            <form action={logoutAction}>
+              <button className="ghost-button" type="submit">
+                {dictionary.nav.logout}
+              </button>
+            </form>
+          </section>
+        </main>
+      );
     }
 
     return (
