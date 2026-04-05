@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { inviteUserAction, logoutAction, revokeSessionAction, seedSelfAccessAction } from "@/lib/actions";
+import { inviteUserAction, logoutAction, revokeSessionAction, seedSelfAccessAction, updateUserMfaAction } from "@/lib/actions";
 import { requireUser } from "@/lib/auth";
 import { AUTH_ROUTES } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
@@ -22,7 +22,7 @@ function formatDate(value: Date | null) {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string }>;
+  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string }>;
 }) {
   const user = await requireUser();
   const dictionary = getDictionary(user.locale);
@@ -115,6 +115,12 @@ export default async function HomePage({
       {params.seed === "1" ? (
         <section className="panel message-panel success-panel">
           MiniAuth admin access has been added to your account.
+        </section>
+      ) : null}
+
+      {params.mfa === "updated" ? (
+        <section className="panel message-panel success-panel">
+          {dictionary.auth.mfaUpdated}
         </section>
       ) : null}
 
@@ -241,6 +247,15 @@ export default async function HomePage({
                   ) : (
                     <p className="empty-state">{dictionary.dashboard.noAccess}</p>
                   )}
+                </div>
+                <div className="account-actions">
+                  <form action={updateUserMfaAction}>
+                    <input name="userId" type="hidden" value={account.id} />
+                    <input name="enabled" type="hidden" value={account.emailMfaEnabled ? "0" : "1"} />
+                    <button className="ghost-button" type="submit">
+                      {account.emailMfaEnabled ? dictionary.auth.disableMfa : dictionary.auth.enableMfa}
+                    </button>
+                  </form>
                 </div>
               </article>
             ))

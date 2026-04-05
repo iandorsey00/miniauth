@@ -565,6 +565,12 @@ h3 {
   margin-top: 1rem;
 }
 
+.account-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+
 .pill,
 .badge {
   display: inline-flex;

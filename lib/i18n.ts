@@ -33,6 +33,9 @@ export const dictionaries = {
       passwordMismatch: "The passwords do not match.",
       inviteTitle: "Invite user",
       inviteSubmit: "Create invite",
+      enableMfa: "Enable MFA",
+      disableMfa: "Disable MFA",
+      mfaUpdated: "Email MFA setting updated.",
     },
     dashboard: {
       title: "Accounts",
@@ -96,6 +99,9 @@ export const dictionaries = {
       passwordMismatch: "两次输入的密码不一致。",
       inviteTitle: "邀请用户",
       inviteSubmit: "创建邀请",
+      enableMfa: "开启 MFA",
+      disableMfa: "关闭 MFA",
+      mfaUpdated: "邮箱双重验证设置已更新。",
     },
     dashboard: {
       title: "账户",

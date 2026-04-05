@@ -314,6 +314,23 @@ export async function revokeSessionAction(formData: FormData) {
   redirect(AUTH_ROUTES.home);
 }
 
+export async function updateUserMfaAction(formData: FormData) {
+  await requireAdmin();
+  const userId = String(formData.get("userId") || "");
+  const enabled = String(formData.get("enabled") || "") === "1";
+
+  if (!userId) {
+    redirect(`${AUTH_ROUTES.home}?mfa=invalid`);
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { emailMfaEnabled: enabled },
+  });
+
+  redirect(`${AUTH_ROUTES.home}?mfa=updated`);
+}
+
 export async function seedSelfAccessAction() {
   const user = await getCurrentUser();
   if (!user) {

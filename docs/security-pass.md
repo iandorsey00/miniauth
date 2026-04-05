@@ -14,12 +14,14 @@ Scope reviewed:
 - shared preference cookie issuance for locale, theme, and accent
 - cookie-driven root theme and accent rendering compatibility
 - Resend-backed MFA email delivery and login feedback-state restoration
+- admin-only MFA toggle for existing users
 - deployment and secret-handling defaults
 
 Changes made during the pass:
 
 - removed MFA code leakage through redirect query parameters
 - limited invite and session-revocation actions to MiniAuth admins
+- limited existing-user MFA toggles to MiniAuth admins
 - kept shared preference cookies constrained to neutral value transport rather than shared CSS or UI implementation
 - kept cookie-driven root rendering limited to theme, accent, and locale presentation concerns rather than access control decisions
 - added send, resend, and verify rate-limited MFA handling with explicit send-failure cleanup
