@@ -26,6 +26,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - MiniAuth now reads those shared values back into root `data-theme` and `data-accent` attributes so its rendering model stays compatible with MiniTickets
 - MiniAuth now accepts a validated `returnTo` URL on login and MFA verification so trusted first-party apps can hand users back to their own post-login route instead of always landing on the MiniAuth dashboard
 - trusted post-login return origins should be declared explicitly through `ALLOWED_RETURN_TO_ORIGINS`; do not treat arbitrary redirect targets as valid
+- MiniAuth now also exposes a shared logout route so first-party apps can sign users out of the central session and then return them to the calling app's login screen
 - the auth pages and admin dashboard now follow a calmer, more restrained presentation pass rather than the original scaffold styling
 - the primary sign-in page now intentionally mirrors the MiniTickets login structure and spacing so the shared-login experience feels consistent across apps, while keeping the MiniAuth Chinese and English product name
 - the sign-in page now again surfaces important login feedback states such as invalid credentials, inactive account, send failure, rate limiting, and password-setup success without expanding the page back into a cluttered layout
