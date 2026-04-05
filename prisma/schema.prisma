@@ -52,7 +52,7 @@ model User {
   passwordHash        String?
   locale              Locale                @default(EN)
   themePreference     ThemePreference       @default(SYSTEM)
-  accentColor         AccentColor           @default(TEAL)
+  accentColor         AccentColor           @default(BLUE)
   isActive            Boolean               @default(true)
   emailMfaEnabled     Boolean               @default(false)
   lastLoginAt         DateTime?
