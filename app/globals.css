@@ -236,8 +236,13 @@ label {
 .auth-topbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-height: 3rem;
   margin-bottom: 1.75rem;
+}
+
+.dashboard-topbar {
+  margin-bottom: 1.25rem;
 }
 
 .auth-brand {

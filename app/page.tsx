@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import {
   assignWorkspaceMembershipAction,
@@ -57,6 +58,26 @@ function formatState(value: "ACTIVE" | "INACTIVE", dictionary: ReturnType<typeof
   return value === "ACTIVE" ? dictionary.common.active : dictionary.common.inactive;
 }
 
+function BrandHeader({
+  appName,
+  locale,
+  action,
+}: {
+  appName: string;
+  locale: "EN" | "ZH_CN";
+  action?: ReactNode;
+}) {
+  return (
+    <header className="auth-topbar dashboard-topbar">
+      <div className="auth-brand">
+        <span className="auth-brand-wordmark">{appName}</span>
+        {locale === "ZH_CN" ? <span className="auth-brand-subtitle">MiniAuth</span> : null}
+      </div>
+      {action ? <div>{action}</div> : null}
+    </header>
+  );
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -90,10 +111,20 @@ export default async function HomePage({
     if (!canBootstrapSelf) {
       return (
         <main className="shell">
+          <BrandHeader
+            appName={dictionary.appName}
+            locale={user.locale}
+            action={
+              <form action={logoutAction}>
+                <button className="ghost-button" type="submit">
+                  {dictionary.nav.logout}
+                </button>
+              </form>
+            }
+          />
           <section className="panel hero preference-shell">
             <div className="section-heading">
               <div>
-                <p className="eyebrow">{dictionary.appName}</p>
                 <h1>{dictionary.dashboard.preferencesTitle}</h1>
                 <p>{dictionary.dashboard.preferencesSubtitle}</p>
               </div>
@@ -150,8 +181,8 @@ export default async function HomePage({
 
     return (
       <main className="shell">
+        <BrandHeader appName={dictionary.appName} locale={user.locale} />
         <section className="panel hero preference-shell">
-          <p className="eyebrow">{dictionary.appName}</p>
           <h1>{dictionary.dashboard.bootstrapAccessTitle}</h1>
           <p>{dictionary.dashboard.bootstrapAccessBody}</p>
           <form action={seedSelfAccessAction}>
@@ -211,10 +242,20 @@ export default async function HomePage({
 
   return (
     <main className="shell">
+      <BrandHeader
+        appName={dictionary.appName}
+        locale={user.locale}
+        action={
+          <form action={logoutAction}>
+            <button className="ghost-button" type="submit">
+              {dictionary.nav.logout}
+            </button>
+          </form>
+        }
+      />
       <section className="hero-slab">
         <div className="hero-row">
           <div className="hero-copy">
-            <p className="eyebrow">{dictionary.appName}</p>
             <h1>{dictionary.dashboard.title}</h1>
             <p>{dictionary.dashboard.subtitle}</p>
           </div>
@@ -232,11 +273,6 @@ export default async function HomePage({
               <span className="metric-label">{dictionary.dashboard.appsMetric}</span>
             </div>
           </div>
-          <form action={logoutAction}>
-            <button className="ghost-button" type="submit">
-              {dictionary.nav.logout}
-            </button>
-          </form>
         </div>
       </section>
 
