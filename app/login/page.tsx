@@ -50,7 +50,7 @@ export default async function LoginPage({
         <section className="login-card">
           <div className="stack">
             <h2>{dictionary.auth.loginTitle}</h2>
-            {params.setup === "1" ? <div className="badge badge-success">Password set. You can sign in now.</div> : null}
+            {params.setup === "1" ? <div className="badge badge-success">{dictionary.auth.setupSuccess}</div> : null}
             {errorMessage ? <div className="badge badge-danger">{errorMessage}</div> : null}
             <form action={loginAction}>
               {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}

@@ -1,4 +1,7 @@
+import { cookies } from "next/headers";
+
 import { setupPasswordAction } from "@/lib/actions";
+import { env } from "@/lib/env";
 import { getDictionary } from "@/lib/i18n";
 
 export default async function SetupPasswordPage({
@@ -7,7 +10,9 @@ export default async function SetupPasswordPage({
   searchParams: Promise<{ token?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const dictionary = getDictionary("EN");
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get(env.sharedLocaleCookieName)?.value || env.defaultLocale).toUpperCase();
+  const dictionary = getDictionary(locale === "ZH_CN" ? "ZH_CN" : "EN");
   const errorMessage =
     params.error === "password_mismatch"
       ? dictionary.auth.passwordMismatch

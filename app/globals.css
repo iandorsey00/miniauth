@@ -7,6 +7,7 @@
   --accent-glow-auth-strong: rgba(15, 118, 110, 0.07);
   --accent-glow-auth-soft: rgba(45, 212, 191, 0.05);
   --danger: #b33a29;
+  --success: #0f766e;
   --shadow: 0 28px 80px rgba(15, 23, 42, 0.08);
   --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.05);
   --color-accent: var(--accent);
@@ -134,7 +135,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -156,7 +158,8 @@ button:hover {
 
 button:focus,
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
 }
@@ -173,7 +176,8 @@ select:focus {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   border: 0;
   border-bottom: 1px solid var(--border);
@@ -182,6 +186,11 @@ select {
   color: var(--text);
   padding: 0.9rem 0 0.75rem;
   outline: none;
+}
+
+textarea {
+  min-height: 6.5rem;
+  resize: vertical;
 }
 
 label {
@@ -272,7 +281,7 @@ label {
 
 .hero-slab {
   margin-bottom: 1rem;
-  padding: 2rem;
+  padding: 2.1rem;
   background:
     radial-gradient(circle at top right, var(--accent-glow-auth-strong), transparent 22%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 55%),
@@ -290,8 +299,8 @@ label {
 }
 
 .metric-card {
-  min-width: 108px;
-  padding: 0.85rem 1rem;
+  min-width: 114px;
+  padding: 0.95rem 1rem;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.44);
   border: 1px solid var(--border);
@@ -328,7 +337,7 @@ label {
 }
 
 .overview-card {
-  padding: 1.15rem 1.25rem;
+  padding: 1.2rem 1.25rem;
   display: grid;
   gap: 0.4rem;
   background: rgba(255, 252, 247, 0.68);
@@ -342,6 +351,11 @@ label {
 .stack {
   display: grid;
   gap: 1rem;
+}
+
+.preference-shell {
+  max-width: 42rem;
+  margin: 0 auto;
 }
 
 .field {
@@ -443,7 +457,7 @@ label {
 .login-card {
   width: min(100%, 440px);
   margin: 0 auto;
-  padding: 1.8rem 1.6rem 1.65rem;
+  padding: 1.95rem 1.75rem 1.75rem;
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
@@ -537,7 +551,7 @@ h3 {
 .account-card {
   border: 1px solid var(--border);
   border-radius: 26px;
-  padding: 1.2rem;
+  padding: 1.25rem;
   background: rgba(255, 252, 247, 0.72);
   box-shadow: var(--shadow-soft);
 }
@@ -565,9 +579,19 @@ h3 {
   margin-top: 1rem;
 }
 
+.subsection-label {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
 .account-actions {
   display: flex;
   justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin-top: 1rem;
 }
 
@@ -585,10 +609,45 @@ h3 {
   color: var(--accent-ink);
 }
 
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.inline-form input,
+.inline-form select {
+  width: auto;
+  min-width: 8rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-strong) 84%, transparent);
+}
+
+.inline-form input[type="hidden"] {
+  display: none;
+}
+
+.inline-form .pill {
+  white-space: nowrap;
+}
+
+.inline-note {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
 .badge-active,
 .success-note,
 .success-panel {
-  background: rgba(13, 107, 99, 0.12);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
   color: var(--text);
 }
 
@@ -690,6 +749,16 @@ code {
 
   .meta-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inline-form {
+    align-items: stretch;
+  }
+
+  .inline-form input,
+  .inline-form select,
+  .inline-form button {
+    width: 100%;
   }
 }
 

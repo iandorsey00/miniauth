@@ -57,7 +57,7 @@ export default async function VerifyLoginPage({
               {dictionary.auth.verifySent}
               {previewCode ? (
                 <>
-                  {" "}Dev preview code: <code>{previewCode}</code>
+                  {" "}{dictionary.auth.verifyPreviewCode} <code>{previewCode}</code>
                 </>
               ) : null}
             </div>

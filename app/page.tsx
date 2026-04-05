@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import {
   assignWorkspaceMembershipAction,
@@ -11,9 +10,9 @@ import {
   revokeSessionAction,
   seedSelfAccessAction,
   upsertUserAppAccessAction,
+  updateSelfPreferencesAction,
   updateUserActiveAction,
   updateUserMfaAction,
-  updateSelfPreferencesAction,
   updateWorkspaceAction,
 } from "@/lib/actions";
 import { requireUser } from "@/lib/auth";
@@ -25,6 +24,7 @@ import { prisma } from "@/lib/prisma";
 const localeValues = ["EN", "ZH_CN"] as const;
 const themeValues = ["SYSTEM", "LIGHT", "DARK"] as const;
 const accentValues = ["BLUE", "CYAN", "TEAL", "GREEN", "LIME", "YELLOW", "ORANGE", "RED", "PINK", "PURPLE"] as const;
+
 const accentLabelMap = {
   BLUE: { EN: "Blue", ZH_CN: "蓝色" },
   CYAN: { EN: "Cyan", ZH_CN: "青色" },
@@ -38,25 +38,45 @@ const accentLabelMap = {
   PURPLE: { EN: "Purple", ZH_CN: "紫色" },
 } as const;
 
-function formatDate(value: Date | null) {
+function formatDate(value: Date | null, locale: "en-US" | "zh-CN") {
   if (!value) {
     return "—";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(value);
 }
 
+function formatRole(value: "ADMIN" | "MEMBER", dictionary: ReturnType<typeof getDictionary>) {
+  return value === "ADMIN" ? dictionary.common.admin : dictionary.common.member;
+}
+
+function formatState(value: "ACTIVE" | "INACTIVE", dictionary: ReturnType<typeof getDictionary>) {
+  return value === "ACTIVE" ? dictionary.common.active : dictionary.common.inactive;
+}
+
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ invite?: string; setupToken?: string; seed?: string; mfa?: string; account?: string; access?: string; preferences?: string; workspace?: string; membership?: string }>;
+  searchParams: Promise<{
+    invite?: string;
+    setupToken?: string;
+    seed?: string;
+    mfa?: string;
+    account?: string;
+    access?: string;
+    preferences?: string;
+    workspace?: string;
+    membership?: string;
+  }>;
 }) {
   const user = await requireUser();
   const dictionary = getDictionary(user.locale);
+  const localeCode = user.locale === "ZH_CN" ? "zh-CN" : "en-US";
   const params = await searchParams;
+
   const bootstrapAdminCount = await prisma.appAccess.count({
     where: {
       appKey: "miniauth",
@@ -70,14 +90,16 @@ export default async function HomePage({
     if (!canBootstrapSelf) {
       return (
         <main className="shell">
-          <section className="panel hero">
-            <p className="eyebrow">{dictionary.appName}</p>
-            <h1>{dictionary.dashboard.preferencesTitle}</h1>
-            <p>{dictionary.dashboard.preferencesSubtitle}</p>
+          <section className="panel hero preference-shell">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">{dictionary.appName}</p>
+                <h1>{dictionary.dashboard.preferencesTitle}</h1>
+                <p>{dictionary.dashboard.preferencesSubtitle}</p>
+              </div>
+            </div>
             {params.preferences === "saved" ? (
-              <section className="panel message-panel success-panel">
-                Preferences updated.
-              </section>
+              <section className="panel message-panel success-panel">{dictionary.dashboard.preferencesSaved}</section>
             ) : null}
             <form className="stack" action={updateSelfPreferencesAction}>
               <div className="field">
@@ -128,12 +150,12 @@ export default async function HomePage({
 
     return (
       <main className="shell">
-        <section className="panel hero">
+        <section className="panel hero preference-shell">
           <p className="eyebrow">{dictionary.appName}</p>
-          <h1>{dictionary.dashboard.title}</h1>
-          <p>{dictionary.dashboard.subtitle}</p>
+          <h1>{dictionary.dashboard.bootstrapAccessTitle}</h1>
+          <p>{dictionary.dashboard.bootstrapAccessBody}</p>
           <form action={seedSelfAccessAction}>
-            <button type="submit">Grant myself MiniAuth admin access</button>
+            <button type="submit">{dictionary.dashboard.bootstrapAccessAction}</button>
           </form>
         </section>
       </main>
@@ -185,6 +207,7 @@ export default async function HomePage({
   const activeUsers = users.filter((account) => account.isActive).length;
   const mfaUsers = users.filter((account) => account.emailMfaEnabled).length;
   const grantedApps = new Set(users.flatMap((account) => account.appAccess.map((access) => access.appKey))).size;
+  const pendingUsers = users.filter((account) => !account.passwordHash).length;
 
   return (
     <main className="shell">
@@ -198,15 +221,15 @@ export default async function HomePage({
           <div className="hero-metrics">
             <div className="metric-card">
               <span className="metric-value">{users.length}</span>
-              <span className="metric-label">Accounts</span>
+              <span className="metric-label">{dictionary.dashboard.accountsMetric}</span>
             </div>
             <div className="metric-card">
               <span className="metric-value">{sessions.length}</span>
-              <span className="metric-label">Live sessions</span>
+              <span className="metric-label">{dictionary.dashboard.liveSessionsMetric}</span>
             </div>
             <div className="metric-card">
               <span className="metric-value">{grantedApps}</span>
-              <span className="metric-label">Apps</span>
+              <span className="metric-label">{dictionary.dashboard.appsMetric}</span>
             </div>
           </div>
           <form action={logoutAction}>
@@ -228,39 +251,27 @@ export default async function HomePage({
       ) : null}
 
       {params.invite === "sent" ? (
-        <section className="panel message-panel success-panel">
-          {dictionary.auth.inviteSent}
-        </section>
+        <section className="panel message-panel success-panel">{dictionary.auth.inviteSent}</section>
       ) : null}
 
       {params.seed === "1" ? (
-        <section className="panel message-panel success-panel">
-          MiniAuth admin access has been added to your account.
-        </section>
+        <section className="panel message-panel success-panel">{dictionary.dashboard.bootstrapAccessSuccess}</section>
       ) : null}
 
       {params.mfa === "updated" ? (
-        <section className="panel message-panel success-panel">
-          {dictionary.auth.mfaUpdated}
-        </section>
+        <section className="panel message-panel success-panel">{dictionary.auth.mfaUpdated}</section>
       ) : null}
 
       {params.account === "updated" ? (
-        <section className="panel message-panel success-panel">
-          Account status updated.
-        </section>
+        <section className="panel message-panel success-panel">{dictionary.dashboard.accountUpdated}</section>
       ) : null}
 
       {params.access === "updated" ? (
-        <section className="panel message-panel success-panel">
-          {dictionary.auth.appAccessUpdated}
-        </section>
+        <section className="panel message-panel success-panel">{dictionary.auth.appAccessUpdated}</section>
       ) : null}
 
       {params.workspace === "saved" ? (
-        <section className="panel message-panel success-panel">
-          {dictionary.dashboard.workspaces} saved.
-        </section>
+        <section className="panel message-panel success-panel">{dictionary.dashboard.workspaceSaved}</section>
       ) : null}
 
       {params.membership === "updated" ? (
@@ -271,16 +282,16 @@ export default async function HomePage({
 
       <section className="overview-grid">
         <div className="overview-card">
-          <span className="overview-label">Active accounts</span>
+          <span className="overview-label">{dictionary.dashboard.activeAccountsMetric}</span>
           <strong>{activeUsers}</strong>
         </div>
         <div className="overview-card">
-          <span className="overview-label">Email MFA enabled</span>
+          <span className="overview-label">{dictionary.dashboard.mfaEnabledMetric}</span>
           <strong>{mfaUsers}</strong>
         </div>
         <div className="overview-card">
-          <span className="overview-label">Pending without password</span>
-          <strong>{users.filter((account) => !account.passwordHash).length}</strong>
+          <span className="overview-label">{dictionary.dashboard.pendingWithoutPasswordMetric}</span>
+          <strong>{pendingUsers}</strong>
         </div>
         <div className="overview-card">
           <span className="overview-label">{dictionary.dashboard.workspaces}</span>
@@ -329,6 +340,7 @@ export default async function HomePage({
             <div>
               <p className="eyebrow">{dictionary.dashboard.activeSessions}</p>
               <h2>{dictionary.dashboard.activeSessions}</h2>
+              <p>{dictionary.dashboard.activeSessionsSubtitle}</p>
             </div>
           </div>
           <div className="stack">
@@ -338,20 +350,20 @@ export default async function HomePage({
                   <div className="list-row">
                     <div>
                       <strong>{session.user.email}</strong>
-                      <p>Created {formatDate(session.createdAt)}</p>
-                      <p>Expires {formatDate(session.expiresAt)}</p>
+                      <p>{dictionary.dashboard.sessionCreated} {formatDate(session.createdAt, localeCode)}</p>
+                      <p>{dictionary.dashboard.sessionExpires} {formatDate(session.expiresAt, localeCode)}</p>
                     </div>
                     <form action={revokeSessionAction}>
                       <input name="sessionId" type="hidden" value={session.id} />
                       <button className="ghost-button" type="submit">
-                        Revoke
+                        {dictionary.common.revoke}
                       </button>
                     </form>
                   </div>
                 </article>
               ))
             ) : (
-              <p className="empty-state">No active sessions.</p>
+              <p className="empty-state">{dictionary.dashboard.noSessions}</p>
             )}
           </div>
         </div>
@@ -361,7 +373,8 @@ export default async function HomePage({
         <div className="section-heading">
           <div>
             <p className="eyebrow">{dictionary.dashboard.title}</p>
-            <h2>People and access</h2>
+            <h2>{dictionary.dashboard.peopleAccessTitle}</h2>
+            <p>{dictionary.dashboard.peopleAccessSubtitle}</p>
           </div>
           <Link className="text-link" href={AUTH_ROUTES.login}>
             {dictionary.auth.loginTitle}
@@ -380,12 +393,15 @@ export default async function HomePage({
                     {account.isActive ? dictionary.common.active : dictionary.common.inactive}
                   </div>
                 </div>
+
                 <div className="meta-grid">
                   <span><strong>{dictionary.common.locale}</strong><br />{account.locale}</span>
                   <span><strong>{dictionary.common.mfa}</strong><br />{account.emailMfaEnabled ? dictionary.common.yes : dictionary.common.no}</span>
                   <span><strong>{dictionary.common.passwordSet}</strong><br />{account.passwordHash ? dictionary.common.yes : dictionary.common.no}</span>
-                  <span><strong>{dictionary.common.createdAt}</strong><br />{formatDate(account.createdAt)}</span>
+                  <span><strong>{dictionary.common.createdAt}</strong><br />{formatDate(account.createdAt, localeCode)}</span>
                 </div>
+
+                <p className="subsection-label">{dictionary.common.currentGrants}</p>
                 <div className="access-list">
                   {account.appAccess.length ? (
                     account.appAccess.map((access) => (
@@ -394,13 +410,16 @@ export default async function HomePage({
                         <input name="appKey" type="hidden" value={access.appKey} />
                         <div className="pill">{access.appKey}</div>
                         <select aria-label={`${access.appKey} role`} name="role" defaultValue={access.role}>
-                          <option value="MEMBER">MEMBER</option>
-                          <option value="ADMIN">ADMIN</option>
+                          <option value="MEMBER">{dictionary.common.member}</option>
+                          <option value="ADMIN">{dictionary.common.admin}</option>
                         </select>
                         <select aria-label={`${access.appKey} state`} name="state" defaultValue={access.state}>
-                          <option value="ACTIVE">ACTIVE</option>
-                          <option value="INACTIVE">INACTIVE</option>
+                          <option value="ACTIVE">{dictionary.common.active}</option>
+                          <option value="INACTIVE">{dictionary.common.inactive}</option>
                         </select>
+                        <div className="inline-note">
+                          {formatRole(access.role, dictionary)} · {formatState(access.state, dictionary)}
+                        </div>
                         <button className="ghost-button" type="submit">
                           {dictionary.common.update}
                         </button>
@@ -410,27 +429,30 @@ export default async function HomePage({
                     <p className="empty-state">{dictionary.dashboard.noAccess}</p>
                   )}
                 </div>
+
                 <form action={upsertUserAppAccessAction} className="inline-form">
                   <input name="userId" type="hidden" value={account.id} />
                   <input
                     aria-label={`${account.email} app key`}
                     name="appKey"
-                    placeholder="miniassets"
+                    placeholder={dictionary.common.appKeyPlaceholder}
                     type="text"
                     required
                   />
                   <select aria-label={`${account.email} new role`} name="role" defaultValue="MEMBER">
-                    <option value="MEMBER">MEMBER</option>
-                    <option value="ADMIN">ADMIN</option>
+                    <option value="MEMBER">{dictionary.common.member}</option>
+                    <option value="ADMIN">{dictionary.common.admin}</option>
                   </select>
                   <select aria-label={`${account.email} new state`} name="state" defaultValue="ACTIVE">
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
+                    <option value="ACTIVE">{dictionary.common.active}</option>
+                    <option value="INACTIVE">{dictionary.common.inactive}</option>
                   </select>
                   <button className="ghost-button" type="submit">
                     {dictionary.common.addAccess}
                   </button>
                 </form>
+
+                <p className="subsection-label">{dictionary.common.sharedMemberships}</p>
                 <div className="access-list">
                   {account.memberships.length ? (
                     account.memberships.map((membership) => (
@@ -438,10 +460,10 @@ export default async function HomePage({
                         <input name="userId" type="hidden" value={account.id} />
                         <input name="workspaceId" type="hidden" value={membership.workspaceId} />
                         <div className="pill">
-                          {membership.workspace.name} · {membership.role}
+                          {membership.workspace.name} · {formatRole(membership.role, dictionary)}
                         </div>
                         <button className="ghost-button" type="submit">
-                          Remove
+                          {dictionary.common.remove}
                         </button>
                       </form>
                     ))
@@ -449,6 +471,7 @@ export default async function HomePage({
                     <p className="empty-state">{dictionary.dashboard.noWorkspaces}</p>
                   )}
                 </div>
+
                 <div className="account-actions">
                   {!account.passwordHash ? (
                     <form action={resendInviteAction}>
@@ -477,11 +500,20 @@ export default async function HomePage({
                   ) ? (
                     <form action={assignWorkspaceMembershipAction}>
                       <input name="userId" type="hidden" value={account.id} />
-                      <select name="workspaceId" defaultValue={workspaces.find(
-                        (workspace) => !account.memberships.some((membership) => membership.workspaceId === workspace.id),
-                      )?.id}>
+                      <select
+                        name="workspaceId"
+                        defaultValue={
+                          workspaces.find(
+                            (workspace) =>
+                              !account.memberships.some((membership) => membership.workspaceId === workspace.id),
+                          )?.id
+                        }
+                      >
                         {workspaces
-                          .filter((workspace) => !account.memberships.some((membership) => membership.workspaceId === workspace.id))
+                          .filter(
+                            (workspace) =>
+                              !account.memberships.some((membership) => membership.workspaceId === workspace.id),
+                          )
                           .map((workspace) => (
                             <option key={workspace.id} value={workspace.id}>
                               {workspace.name}
@@ -489,11 +521,11 @@ export default async function HomePage({
                           ))}
                       </select>
                       <select name="role" defaultValue="MEMBER">
-                        <option value="MEMBER">MEMBER</option>
-                        <option value="ADMIN">ADMIN</option>
+                        <option value="MEMBER">{dictionary.common.member}</option>
+                        <option value="ADMIN">{dictionary.common.admin}</option>
                       </select>
                       <button className="ghost-button" type="submit">
-                        Add workspace
+                        {dictionary.common.addWorkspace}
                       </button>
                     </form>
                   ) : null}
@@ -555,7 +587,11 @@ export default async function HomePage({
                     </div>
                     <div className="field">
                       <label htmlFor={`workspace-description-${workspace.id}`}>{dictionary.common.description}</label>
-                      <textarea id={`workspace-description-${workspace.id}`} name="description" defaultValue={workspace.description ?? ""} />
+                      <textarea
+                        id={`workspace-description-${workspace.id}`}
+                        name="description"
+                        defaultValue={workspace.description ?? ""}
+                      />
                     </div>
                     <label className="toggle-row">
                       <span>{dictionary.common.archived}</span>
@@ -563,9 +599,11 @@ export default async function HomePage({
                     </label>
                     <div className="meta-grid">
                       <span><strong>{dictionary.common.members}</strong><br />{workspace.memberships.length}</span>
-                      <span><strong>{dictionary.common.createdAt}</strong><br />{formatDate(workspace.createdAt)}</span>
+                      <span><strong>{dictionary.common.createdAt}</strong><br />{formatDate(workspace.createdAt, localeCode)}</span>
                     </div>
-                    <button className="ghost-button" type="submit">{dictionary.common.save}</button>
+                    <button className="ghost-button" type="submit">
+                      {dictionary.common.save}
+                    </button>
                   </form>
                 </article>
               ))

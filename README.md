@@ -43,6 +43,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - MiniAuth now also owns shared workspace identity and workspace membership truth for connected apps, without taking over app-specific ticket or product authorization.
 - MiniAuth now includes a one-off MiniTickets workspace import script so existing shared workspaces and memberships can be copied into MiniAuth before downstream apps switch to synced workspace truth.
 - The current UI uses a calmer auth layout, and the sign-in page keeps a minimal structure while still surfacing important sign-in feedback such as inactive-account, invalid-login, rate-limit, MFA-send, and password-setup success states.
+- The broader dashboard and auth surfaces now follow a more cohesive bilingual polish pass, with more consistent spacing, calmer card and form rhythm, and dictionary-backed copy across the remaining admin and account-preference flows.
 - MiniAuth now accepts a validated `returnTo` target on login and MFA verification so trusted apps such as MiniTickets can send users back to their own post-login route after successful authentication.
 - MiniAuth now also exposes a shared logout route so downstream apps can clear the shared MiniAuth session and send users back to their own sign-in screen in one step.
 - The app serves `robots.txt` with a full-site disallow policy.
