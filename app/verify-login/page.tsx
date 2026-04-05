@@ -43,42 +43,53 @@ export default async function VerifyLoginPage({
 
   return (
     <main className="auth-shell">
-      <section className="auth-layout auth-layout-compact">
-        <section className="auth-card">
-          <div className="auth-card-header">
-            <p className="eyebrow">{dictionary.appName}</p>
-            <h1>{dictionary.auth.verifyTitle}</h1>
-            <p className="lede">
-              {dictionary.auth.verifyIntro} {maskEmail(challenge.user.email)}
-            </p>
+      <div className="auth-page-shell">
+        <header className="auth-topbar">
+          <div className="auth-brand">
+            <span className="auth-brand-wordmark">{dictionary.appName}</span>
+            {challenge.user.locale === "ZH_CN" ? (
+              <span className="auth-brand-subtitle" lang="en">
+                MiniAuth
+              </span>
+            ) : null}
           </div>
-          {params.sent === "1" ? (
-            <div className="success-note">
-              {dictionary.auth.verifySent}
-              {previewCode ? (
-                <>
-                  {" "}{dictionary.auth.verifyPreviewCode} <code>{previewCode}</code>
-                </>
-              ) : null}
+        </header>
+        <section className="auth-layout auth-layout-compact">
+          <section className="auth-card auth-flow-card">
+            <div className="auth-card-header">
+              <h1>{dictionary.auth.verifyTitle}</h1>
+              <p className="lede">
+                {dictionary.auth.verifyIntro} {maskEmail(challenge.user.email)}
+              </p>
             </div>
-          ) : null}
-          {errorMessage ? <div className="error-note">{errorMessage}</div> : null}
-          <form className="stack" action={verifyLoginCodeAction}>
-            {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
-            <div className="field">
-              <label htmlFor="code">{dictionary.auth.verificationCode}</label>
-              <input id="code" name="code" type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required />
-            </div>
-            <button type="submit">{dictionary.auth.verifySubmit}</button>
-          </form>
-          <form action={resendLoginCodeAction}>
-            {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
-            <button className="ghost-button full-width" type="submit">
-              {dictionary.auth.resendCode}
-            </button>
-          </form>
+            {params.sent === "1" ? (
+              <div className="success-note">
+                {dictionary.auth.verifySent}
+                {previewCode ? (
+                  <>
+                    {" "}{dictionary.auth.verifyPreviewCode} <code>{previewCode}</code>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+            {errorMessage ? <div className="error-note">{errorMessage}</div> : null}
+            <form className="stack" action={verifyLoginCodeAction}>
+              {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
+              <div className="field">
+                <label htmlFor="code">{dictionary.auth.verificationCode}</label>
+                <input id="code" name="code" type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required />
+              </div>
+              <button type="submit">{dictionary.auth.verifySubmit}</button>
+            </form>
+            <form action={resendLoginCodeAction}>
+              {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
+              <button className="ghost-button full-width" type="submit">
+                {dictionary.auth.resendCode}
+              </button>
+            </form>
+          </section>
         </section>
-      </section>
+      </div>
     </main>
   );
 }

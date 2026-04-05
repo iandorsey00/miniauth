@@ -41,6 +41,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - the primary sign-in page now intentionally mirrors the MiniTickets login structure and spacing so the shared-login experience feels consistent across apps, while keeping the MiniAuth Chinese and English product name
 - the sign-in page now again surfaces important login feedback states such as invalid credentials, inactive account, send failure, rate limiting, and password-setup success without expanding the page back into a cluttered layout
 - the broader admin dashboard, non-admin preferences surface, and setup or verify flows now also share a more polished spacing and panel system, with the remaining operational copy moved into the bilingual dictionary instead of living as scattered hardcoded English
+- the auth flows now also use a dedicated lock app icon and a quieter top-left product header instead of the older oversized centered hero treatment, so the MiniAuth entry experience feels closer to the rest of the app family without changing auth behavior
 - the app serves a site-wide `robots.txt` disallow so search engines are asked not to index MiniAuth
 - deployment docs intentionally use placeholders and examples only; keep private host and secret details in private runbooks or server-local env files
 - use [deploy.md](/Users/iandorsey/dev/miniauth/docs/deploy.md) for build, deploy, health-check, and rollback steps

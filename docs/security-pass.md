@@ -62,3 +62,4 @@ Visual refresh note:
 - the stripped-down sign-in page remains presentation-only and does not change validation, redirects, or credential handling
 - the MiniTickets-style sign-in alignment remains presentation-only and does not expand authentication scope, change cookie semantics, or loosen any access checks
 - the broader dashboard and account-preference polish remains presentation and copy-only; moving remaining interface strings into the bilingual dictionary does not change permission logic or data access boundaries
+- the dedicated lock app icon and top-left auth header refresh remain presentation-only and do not affect authentication, session validation, redirect handling, or data exposure

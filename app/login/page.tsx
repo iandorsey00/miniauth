@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { loginAction } from "@/lib/actions";
 import { getCurrentUser } from "@/lib/auth";
@@ -34,25 +34,28 @@ export default async function LoginPage({
           : null;
 
   return (
-    <div className="auth-page">
-      <div className="auth-card minitickets-auth-card">
-        <section className="hero-card">
-          <span className="login-brand">
-            <span className="subtitle-only">{dictionary.appName}</span>
+    <main className="auth-shell">
+      <div className="auth-page-shell">
+        <header className="auth-topbar">
+          <div className="auth-brand">
+            <span className="auth-brand-wordmark">{dictionary.appName}</span>
             {locale === "ZH_CN" ? (
-              <span className="login-brand-subtitle" lang="en">
+              <span className="auth-brand-subtitle" lang="en">
                 MiniAuth
               </span>
             ) : null}
-          </span>
-        </section>
+          </div>
+        </header>
 
-        <section className="login-card">
-          <div className="stack">
-            <h2>{dictionary.auth.loginTitle}</h2>
+        <section className="auth-layout auth-layout-compact">
+          <section className="auth-card auth-flow-card">
+            <div className="auth-card-header">
+              <h1>{dictionary.auth.loginTitle}</h1>
+              <p className="lede">{dictionary.auth.loginIntro}</p>
+            </div>
             {params.setup === "1" ? <div className="badge badge-success">{dictionary.auth.setupSuccess}</div> : null}
             {errorMessage ? <div className="badge badge-danger">{errorMessage}</div> : null}
-            <form action={loginAction}>
+            <form className="stack" action={loginAction}>
               {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
               <div className="field">
                 <label htmlFor="email">{dictionary.auth.email}</label>
@@ -71,9 +74,9 @@ export default async function LoginPage({
               </div>
               <button type="submit">{dictionary.auth.submit}</button>
             </form>
-          </div>
+          </section>
         </section>
       </div>
-    </div>
+    </main>
   );
 }

@@ -211,8 +211,7 @@ label {
 
 .auth-shell {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+  display: block;
 }
 
 .auth-layout {
@@ -226,6 +225,41 @@ label {
 .auth-layout-compact {
   max-width: 540px;
   grid-template-columns: 1fr;
+}
+
+.auth-page-shell {
+  width: min(960px, calc(100vw - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4.5rem;
+}
+
+.auth-topbar {
+  display: flex;
+  align-items: center;
+  min-height: 3rem;
+  margin-bottom: 1.75rem;
+}
+
+.auth-brand {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+}
+
+.auth-brand-wordmark {
+  color: var(--text);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.auth-brand-subtitle {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .auth-aside,
@@ -400,81 +434,22 @@ label {
     var(--bg);
 }
 
-.minitickets-auth-card {
-  width: min(100%, 760px);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 2rem 1.5rem 3rem;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-}
-
-.hero-card {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 0;
-  margin-bottom: 3.4rem;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-.subtitle-only {
-  display: inline-flex;
-  color: var(--text);
-  font-size: clamp(4rem, 9vw, 6.6rem);
-  font-weight: 800;
-  letter-spacing: -0.09em;
-  line-height: 0.9;
-}
-
-.login-brand {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.login-brand-subtitle {
-  color: var(--accent);
-  font-family: "Inter", sans-serif !important;
-  font-variant-east-asian: normal;
-  font-size: clamp(1.15rem, 2.5vw, 1.45rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.login-card form {
-  display: grid;
-  gap: 1rem;
-}
-
-.login-card {
-  width: min(100%, 440px);
+.auth-flow-card {
+  width: min(100%, 480px);
   margin: 0 auto;
-  padding: 1.95rem 1.75rem 1.75rem;
+  padding: 2rem 1.9rem 1.8rem;
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  border-radius: 28px;
+  border-radius: 30px;
   backdrop-filter: blur(18px);
 }
 
-.login-card h2 {
-  margin: 0;
-  font-size: clamp(2.25rem, 4.2vw, 3.75rem);
-  font-weight: 800;
-  letter-spacing: -0.07em;
-  color: var(--text);
-  text-align: center;
+.auth-flow-card .stack {
+  gap: 1rem;
 }
 
-.login-card .field label {
+.auth-flow-card .field label {
   font-size: 0.95rem;
   font-weight: 600;
   text-transform: none;
@@ -483,7 +458,9 @@ label {
   color: var(--text);
 }
 
-.login-card input {
+.auth-flow-card input,
+.auth-flow-card select,
+.auth-flow-card textarea {
   border-radius: 16px;
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--surface-strong) 84%, transparent);
@@ -492,10 +469,8 @@ label {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
-.login-card button {
-  margin-top: 0.5rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
+.auth-flow-card button {
+  margin-top: 0.25rem;
   min-height: 2.9rem;
   font-weight: 700;
   box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 22%, transparent);
@@ -763,34 +738,21 @@ code {
 }
 
 @media (max-width: 640px) {
-  .auth-page {
-    padding: 0;
-    align-items: center;
+  .auth-page-shell {
+    width: min(100%, calc(100vw - 1.5rem));
+    padding: 1.4rem 0 calc(3.25rem + env(safe-area-inset-bottom, 0px));
   }
 
-  .minitickets-auth-card {
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem 1rem calc(3.25rem + env(safe-area-inset-bottom, 0px));
+  .auth-topbar {
+    margin-bottom: 1.15rem;
   }
 
-  .hero-card {
-    padding-top: 0;
-    margin-bottom: 3rem;
+  .auth-brand-wordmark {
+    font-size: 1.45rem;
   }
 
-  .login-card {
+  .auth-flow-card {
     width: 100%;
-    max-width: 440px;
-    padding-bottom: calc(1.35rem + env(safe-area-inset-bottom, 0px));
-  }
-
-  .login-card h2 {
-    font-size: clamp(2.1rem, 8vw, 3rem);
-  }
-
-  .subtitle-only {
-    font-size: clamp(3.2rem, 13vw, 5.1rem);
-    line-height: 0.92;
+    padding: 1.65rem 1.2rem calc(1.35rem + env(safe-area-inset-bottom, 0px));
   }
 }
