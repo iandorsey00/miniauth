@@ -39,8 +39,20 @@ export default async function HomePage({
   const user = await requireUser();
   const dictionary = getDictionary(user.locale);
   const params = await searchParams;
+  const bootstrapAdminCount = await prisma.appAccess.count({
+    where: {
+      appKey: "miniauth",
+      state: "ACTIVE",
+      role: "ADMIN",
+    },
+  });
+  const canBootstrapSelf = bootstrapAdminCount === 0;
 
   if (!user.appAccess.some((item) => item.appKey === "miniauth")) {
+    if (!canBootstrapSelf) {
+      redirect(AUTH_ROUTES.login);
+    }
+
     return (
       <main className="shell">
         <section className="panel hero">

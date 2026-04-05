@@ -20,6 +20,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 ## Operational notes
 
 - the first real admin should be created deliberately during deploy bootstrap
+- the self-seed admin button is now bootstrap-only and should appear only when there are zero active MiniAuth admins
 - MFA email delivery is now wired through Resend when configured; development can still fall back to the on-page preview code flow
 - invite/password-setup email now also uses the Resend mail path when configured, while keeping the manual setup-link fallback if delivery is unavailable
 - admins can now resend a fresh password-setup invite from the dashboard for accounts that still have not set a password

@@ -551,6 +551,18 @@ export async function seedSelfAccessAction() {
     redirect(AUTH_ROUTES.login);
   }
 
+  const existingAdminCount = await prisma.appAccess.count({
+    where: {
+      appKey: "miniauth",
+      state: "ACTIVE",
+      role: "ADMIN",
+    },
+  });
+
+  if (existingAdminCount > 0) {
+    redirect(AUTH_ROUTES.login);
+  }
+
   await prisma.appAccess.upsert({
     where: {
       userId_appKey: {
