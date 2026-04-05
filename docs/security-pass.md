@@ -64,3 +64,4 @@ Visual refresh note:
 - the broader dashboard and account-preference polish remains presentation and copy-only; moving remaining interface strings into the bilingual dictionary does not change permission logic or data access boundaries
 - the dedicated lock app icon and top-left auth header refresh remain presentation-only and do not affect authentication, session validation, redirect handling, or data exposure
 - the dark-mode surface rebalance remains presentation-only and does not alter authentication, authorization, cookie handling, or data exposure boundaries
+- restoring the older centered login-card composition remains presentation-only and does not affect authentication, redirect handling, or credential validation

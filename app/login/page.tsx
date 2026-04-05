@@ -34,28 +34,26 @@ export default async function LoginPage({
           : null;
 
   return (
-    <main className="auth-shell">
-      <div className="auth-page-shell">
-        <header className="auth-topbar">
-          <div className="auth-brand">
-            <span className="auth-brand-wordmark">{dictionary.appName}</span>
+    <div className="auth-page">
+      <div className="auth-card minitickets-auth-card">
+        <section className="hero-card">
+          <span className="login-brand">
+            <span className="subtitle-only">{dictionary.appName}</span>
             {locale === "ZH_CN" ? (
-              <span className="auth-brand-subtitle" lang="en">
+              <span className="login-brand-subtitle" lang="en">
                 MiniAuth
               </span>
             ) : null}
-          </div>
-        </header>
+          </span>
+        </section>
 
-        <section className="auth-layout auth-layout-compact">
-          <section className="auth-card auth-flow-card">
-            <div className="auth-card-header">
-              <h1>{dictionary.auth.loginTitle}</h1>
-              <p className="lede">{dictionary.auth.loginIntro}</p>
-            </div>
+        <section className="login-card">
+          <div className="stack">
+            <h2>{dictionary.auth.loginTitle}</h2>
+            <p className="lede login-intro">{dictionary.auth.loginIntro}</p>
             {params.setup === "1" ? <div className="badge badge-success">{dictionary.auth.setupSuccess}</div> : null}
             {errorMessage ? <div className="badge badge-danger">{errorMessage}</div> : null}
-            <form className="stack" action={loginAction}>
+            <form action={loginAction}>
               {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
               <div className="field">
                 <label htmlFor="email">{dictionary.auth.email}</label>
@@ -74,9 +72,9 @@ export default async function LoginPage({
               </div>
               <button type="submit">{dictionary.auth.submit}</button>
             </form>
-          </section>
+          </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
