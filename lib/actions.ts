@@ -18,7 +18,7 @@ import {
   startSession,
 } from "@/lib/auth";
 import { AUTH_ROUTES } from "@/lib/constants";
-import { sendLoginCodeEmail } from "@/lib/email";
+import { sendLoginCodeEmail, sendPasswordSetupEmail } from "@/lib/email";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { createPasswordSetupToken, hashPasswordSetupToken } from "@/lib/password-setup";
 import { prisma } from "@/lib/prisma";
@@ -314,9 +314,27 @@ export async function inviteUserAction(formData: FormData) {
   });
 
   const token = await createPasswordSetupToken(user.id);
+  let inviteMode: "sent" | "ok" = "ok";
+
+  try {
+    const sent = await sendPasswordSetupEmail({
+      recipient: {
+        email: user.email,
+        displayName: parsed.data.displayName,
+        locale: parsed.data.locale,
+      },
+      setupToken: token.rawToken,
+    });
+
+    if (sent) {
+      inviteMode = "sent";
+    }
+  } catch (error) {
+    console.error("Failed to send password setup email", error);
+  }
 
   redirect(
-    `${AUTH_ROUTES.home}?invite=ok&email=${encodeURIComponent(user.email)}&setupToken=${encodeURIComponent(token.rawToken)}&by=${encodeURIComponent(currentUser.email)}`,
+    `${AUTH_ROUTES.home}?invite=${inviteMode}&email=${encodeURIComponent(user.email)}&setupToken=${encodeURIComponent(token.rawToken)}&by=${encodeURIComponent(currentUser.email)}`,
   );
 }
 

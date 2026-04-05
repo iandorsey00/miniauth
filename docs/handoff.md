@@ -21,6 +21,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 
 - the first real admin should be created deliberately during deploy bootstrap
 - MFA email delivery is now wired through Resend when configured; development can still fall back to the on-page preview code flow
+- invite/password-setup email now also uses the Resend mail path when configured, while keeping the manual setup-link fallback if delivery is unavailable
 - existing users can now have email MFA enabled or disabled directly from the MiniAuth admin dashboard without reusing the invite path
 - existing users can now also be enabled or disabled directly from the MiniAuth admin dashboard, and disabling a user revokes active MiniAuth sessions so downstream apps see the account as inactive immediately
 - MiniAuth now stores shared `locale`, `themePreference`, and `accentColor` values and writes neutral shared cookies for compatible apps on the same parent domain
@@ -42,6 +43,5 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 
 ## Near-term follow-ups
 
-- add production invite email delivery so password-setup links and MFA email use the same operational mail path
 - add a machine-to-machine identity verification path for apps that cannot share a parent-domain cookie
 - add structured admin audit logs

@@ -11,6 +11,11 @@ type LoginCodeEmailInput = {
   code: string;
 };
 
+type PasswordSetupEmailInput = {
+  recipient: MailRecipient;
+  setupToken: string;
+};
+
 type BuiltEmail = {
   subject: string;
   text: string;
@@ -143,6 +148,54 @@ function buildLoginCodeEmail({ recipient, code }: LoginCodeEmailInput): BuiltEma
   };
 }
 
+function buildPasswordSetupEmail({ recipient, setupToken }: PasswordSetupEmailInput): BuiltEmail {
+  const setupUrl = `${getBaseUrl()}/setup-password?token=${encodeURIComponent(setupToken)}`;
+
+  if (recipient.locale === "EN") {
+    return {
+      subject: "Set your MiniAuth password",
+      text: [
+        `Hi ${recipient.displayName},`,
+        "",
+        "Your MiniAuth account is ready.",
+        "Use the link below to set your password and finish account setup:",
+        "",
+        setupUrl,
+        "",
+        "This link expires in 72 hours.",
+      ].join("\n"),
+      html: renderEmailLayout({
+        locale: recipient.locale,
+        title: "Set your password",
+        intro: `Hi ${recipient.displayName},\n\nYour MiniAuth account is ready. Use the link below to set your password and finish account setup.`,
+        body: `<a href="${escapeHtml(setupUrl)}" style="display:inline-block;padding:14px 20px;border-radius:999px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">Set password</a><div style="margin-top:14px;font-size:13px;color:#475467;word-break:break-all;">${escapeHtml(setupUrl)}</div>`,
+        footnote: "This link expires in 72 hours.",
+      }),
+    };
+  }
+
+  return {
+    subject: "设置你的轻量认证密码",
+    text: [
+      `${recipient.displayName}，你好：`,
+      "",
+      "你的轻量认证账户已创建。",
+      "请使用下面的链接设置密码并完成账户启用：",
+      "",
+      setupUrl,
+      "",
+      "此链接将在 72 小时后失效。",
+    ].join("\n"),
+    html: renderEmailLayout({
+      locale: recipient.locale,
+      title: "设置密码",
+      intro: `${recipient.displayName}，你好：\n\n你的轻量认证账户已创建。请使用下面的链接设置密码并完成账户启用。`,
+      body: `<a href="${escapeHtml(setupUrl)}" style="display:inline-block;padding:14px 20px;border-radius:999px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:700;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">设置密码</a><div style="margin-top:14px;font-size:13px;color:#475467;word-break:break-all;">${escapeHtml(setupUrl)}</div>`,
+      footnote: "此链接将在 72 小时后失效。",
+    }),
+  };
+}
+
 async function sendViaResend(to: string, subject: string, text: string, html?: string) {
   const apiKey = getResendApiKey();
   if (!apiKey) {
@@ -174,5 +227,10 @@ async function sendViaResend(to: string, subject: string, text: string, html?: s
 
 export async function sendLoginCodeEmail(input: LoginCodeEmailInput) {
   const message = buildLoginCodeEmail(input);
+  return sendViaResend(input.recipient.email, message.subject, message.text, message.html);
+}
+
+export async function sendPasswordSetupEmail(input: PasswordSetupEmailInput) {
+  const message = buildPasswordSetupEmail(input);
   return sendViaResend(input.recipient.email, message.subject, message.text, message.html);
 }

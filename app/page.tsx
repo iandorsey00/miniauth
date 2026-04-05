@@ -141,6 +141,12 @@ export default async function HomePage({
         </section>
       ) : null}
 
+      {params.invite === "sent" ? (
+        <section className="panel message-panel success-panel">
+          {dictionary.auth.inviteSent}
+        </section>
+      ) : null}
+
       {params.seed === "1" ? (
         <section className="panel message-panel success-panel">
           MiniAuth admin access has been added to your account.
