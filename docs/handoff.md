@@ -43,6 +43,8 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - the broader admin dashboard, non-admin preferences surface, and setup or verify flows now also share a more polished spacing and panel system, with the remaining operational copy moved into the bilingual dictionary instead of living as scattered hardcoded English
 - the auth flows and signed-in dashboard now also use a dedicated lock app icon and a quieter top-left product header instead of the older oversized centered hero treatment, so the MiniAuth experience feels closer to the rest of the app family without changing auth behavior
 - the login page specifically now returns to the earlier centered card treatment, while the dashboard and the other auth flows keep the quieter top-left header approach
+- the MFA verification page now uses that same centered card treatment so the login and verification steps stay visually consistent
+- with MiniAssets retired, the app-access example placeholder now points at a still-live app key instead of `miniassets`
 - dark-mode card, form, note, and panel surfaces have also been rebalanced so the dashboard reads more cleanly in dark theme without the earlier light-biased overlay feel
 - the app serves a site-wide `robots.txt` disallow so search engines are asked not to index MiniAuth
 - deployment docs intentionally use placeholders and examples only; keep private host and secret details in private runbooks or server-local env files

@@ -42,26 +42,25 @@ export default async function VerifyLoginPage({
         : null;
 
   return (
-    <main className="auth-shell">
-      <div className="auth-page-shell">
-        <header className="auth-topbar">
-          <div className="auth-brand">
-            <span className="auth-brand-wordmark">{dictionary.appName}</span>
+    <div className="auth-page">
+      <div className="auth-card minitickets-auth-card">
+        <section className="hero-card">
+          <span className="login-brand">
+            <span className="subtitle-only">{dictionary.appName}</span>
             {challenge.user.locale === "ZH_CN" ? (
-              <span className="auth-brand-subtitle" lang="en">
+              <span className="login-brand-subtitle" lang="en">
                 MiniAuth
               </span>
             ) : null}
-          </div>
-        </header>
-        <section className="auth-layout auth-layout-compact">
-          <section className="auth-card auth-flow-card">
-            <div className="auth-card-header">
-              <h1>{dictionary.auth.verifyTitle}</h1>
-              <p className="lede">
-                {dictionary.auth.verifyIntro} {maskEmail(challenge.user.email)}
-              </p>
-            </div>
+          </span>
+        </section>
+
+        <section className="login-card verify-card">
+          <div className="stack">
+            <h2>{dictionary.auth.verifyTitle}</h2>
+            <p className="lede login-intro">
+              {dictionary.auth.verifyIntro} {maskEmail(challenge.user.email)}
+            </p>
             {params.sent === "1" ? (
               <div className="success-note">
                 {dictionary.auth.verifySent}
@@ -73,11 +72,19 @@ export default async function VerifyLoginPage({
               </div>
             ) : null}
             {errorMessage ? <div className="error-note">{errorMessage}</div> : null}
-            <form className="stack" action={verifyLoginCodeAction}>
+            <form action={verifyLoginCodeAction}>
               {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
               <div className="field">
                 <label htmlFor="code">{dictionary.auth.verificationCode}</label>
-                <input id="code" name="code" type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required />
+                <input
+                  id="code"
+                  name="code"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  required
+                />
               </div>
               <button type="submit">{dictionary.auth.verifySubmit}</button>
             </form>
@@ -87,9 +94,9 @@ export default async function VerifyLoginPage({
                 {dictionary.auth.resendCode}
               </button>
             </form>
-          </section>
+          </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }

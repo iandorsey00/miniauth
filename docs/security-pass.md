@@ -65,3 +65,5 @@ Visual refresh note:
 - the dedicated lock app icon and top-left auth header refresh remain presentation-only and do not affect authentication, session validation, redirect handling, or data exposure
 - the dark-mode surface rebalance remains presentation-only and does not alter authentication, authorization, cookie handling, or data exposure boundaries
 - restoring the older centered login-card composition remains presentation-only and does not affect authentication, redirect handling, or credential validation
+- aligning the MFA verification card with the login-page composition remains presentation-only and does not affect verification logic, resend handling, or credential validation
+- removing the retired `miniassets` example text from the app-access UI is a copy-only cleanup and does not affect grant semantics or authorization behavior
