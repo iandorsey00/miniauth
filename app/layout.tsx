@@ -20,14 +20,14 @@ const localeTokens = new Set(["en", "zh_cn"]);
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
   const theme = (cookieStore.get(env.sharedThemeCookieName)?.value || "system").toLowerCase();
-  const accent = (cookieStore.get(env.sharedAccentCookieName)?.value || "teal").toLowerCase();
+  const accent = (cookieStore.get(env.sharedAccentCookieName)?.value || "blue").toLowerCase();
   const locale = (cookieStore.get(env.sharedLocaleCookieName)?.value || env.defaultLocale).toLowerCase();
 
   return (
     <html
       lang={localeTokens.has(locale) && locale === "zh_cn" ? "zh-CN" : "en"}
       data-theme={themeTokens.has(theme) ? theme : "system"}
-      data-accent={accentTokens.has(accent) ? accent : "teal"}
+      data-accent={accentTokens.has(accent) ? accent : "blue"}
     >
       <body>{children}</body>
     </html>

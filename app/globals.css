@@ -1,13 +1,13 @@
 :root {
   color-scheme: light dark;
-  --accent: #0f766e;
-  --accent-soft: rgba(15, 118, 110, 0.16);
-  --accent-glow-strong: rgba(15, 118, 110, 0.09);
-  --accent-glow-soft: rgba(45, 212, 191, 0.07);
-  --accent-glow-auth-strong: rgba(15, 118, 110, 0.07);
-  --accent-glow-auth-soft: rgba(45, 212, 191, 0.05);
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.14);
+  --accent-glow-strong: rgba(37, 99, 235, 0.08);
+  --accent-glow-soft: rgba(14, 165, 233, 0.06);
+  --accent-glow-auth-strong: rgba(37, 99, 235, 0.06);
+  --accent-glow-auth-soft: rgba(14, 165, 233, 0.04);
   --danger: #b33a29;
-  --success: #0f766e;
+  --success: #2563eb;
   --shadow: 0 28px 80px rgba(15, 23, 42, 0.08);
   --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.05);
   --color-accent: var(--accent);
