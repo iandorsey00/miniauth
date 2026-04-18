@@ -50,7 +50,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - MiniAuth now also uses a dedicated lock app icon and a quieter top-left auth header pattern across sign-in, verification, password-setup, and signed-in dashboard surfaces so branding feels more consistent with the wider app family.
 - The login page specifically now uses the earlier centered card treatment again, while keeping the newer blue accent baseline and leaving the quieter top-left header treatment in place on the dashboard and the other auth flows.
 - The MFA verification page now matches that same centered card treatment, so the sign-in and code-entry steps feel like one continuous flow.
-- The login and verification brand stack now uses the smaller GeoCompare-style wordmark treatment instead of the oversized hero headline, and the English login intro now reads more naturally as `Use one account...`.
+- The login and verification brand stack now uses the smaller GeoCompare Web-style wordmark treatment in English, while the Chinese version returns to the larger bilingual `轻量认证 / MiniAuth` treatment. The English login intro also now reads more naturally as `Use one account...`.
 - Dark-mode card and panel surfaces have also been tuned so dashboard metrics, account cards, inline forms, notes, and supporting panels sit more naturally against the darker palette instead of feeling washed out.
 - With MiniAssets retired, MiniAuth no longer uses `miniassets` as the example app key in the admin UI.
 - MiniAuth now accepts a validated `returnTo` target on login and MFA verification so trusted apps such as MiniTickets can send users back to their own post-login route after successful authentication.

@@ -47,15 +47,17 @@ export default async function VerifyLoginPage({
   return (
     <div className="auth-page">
       <div className="auth-card minitickets-auth-card">
-        <section className="hero-card">
-          <span className="login-brand login-brand-compact">
-            <span className="auth-brand-wordmark">{dictionary.appName}</span>
-            {challenge.user.locale === "ZH_CN" ? (
-              <span className="auth-brand-subtitle" lang="en">
+        <section className={`hero-card ${challenge.user.locale === "ZH_CN" ? "" : "hero-card-geo"}`.trim()}>
+          {challenge.user.locale === "ZH_CN" ? (
+            <span className="login-brand">
+              <span className="subtitle-only">{dictionary.appName}</span>
+              <span className="login-brand-subtitle" lang="en">
                 MiniAuth
               </span>
-            ) : null}
-          </span>
+            </span>
+          ) : (
+            <span className="brand-mark">{dictionary.appName}</span>
+          )}
         </section>
 
         <section className="login-card verify-card">

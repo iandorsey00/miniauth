@@ -487,6 +487,24 @@ label {
   border-radius: 0;
 }
 
+.hero-card-geo {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+  padding: 20px 0 6px;
+  margin-bottom: 2rem;
+}
+
+.brand-mark {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(2.8rem, 7vw, 5.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+  font-weight: 700;
+}
+
 .subtitle-only {
   display: inline-flex;
   color: var(--text);
@@ -501,10 +519,6 @@ label {
   flex-direction: column;
   align-items: center;
   gap: 0.55rem;
-}
-
-.login-brand-compact {
-  gap: 0.18rem;
 }
 
 .login-brand-subtitle {
@@ -914,8 +928,17 @@ code {
     margin-bottom: 2rem;
   }
 
+  .hero-card-geo {
+    padding: 16px 0 4px;
+    margin-bottom: 1.65rem;
+  }
+
   .subtitle-only {
     font-size: clamp(3.2rem, 18vw, 4.8rem);
+  }
+
+  .brand-mark {
+    font-size: clamp(2.5rem, 10vw, 4.1rem);
   }
 
   .login-card {

@@ -36,15 +36,17 @@ export default async function LoginPage({
   return (
     <div className="auth-page">
       <div className="auth-card minitickets-auth-card">
-        <section className="hero-card">
-          <span className="login-brand login-brand-compact">
-            <span className="auth-brand-wordmark">{dictionary.appName}</span>
-            {locale === "ZH_CN" ? (
-              <span className="auth-brand-subtitle" lang="en">
+        <section className={`hero-card ${locale === "ZH_CN" ? "" : "hero-card-geo"}`.trim()}>
+          {locale === "ZH_CN" ? (
+            <span className="login-brand">
+              <span className="subtitle-only">{dictionary.appName}</span>
+              <span className="login-brand-subtitle" lang="en">
                 MiniAuth
               </span>
-            ) : null}
-          </span>
+            </span>
+          ) : (
+            <span className="brand-mark">{dictionary.appName}</span>
+          )}
         </section>
 
         <section className="login-card">
