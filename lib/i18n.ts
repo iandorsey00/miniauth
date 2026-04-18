@@ -9,7 +9,7 @@ export const dictionaries = {
     },
     auth: {
       loginTitle: "Sign in",
-      loginIntro: "Use one calm account across MiniTickets and future related apps.",
+      loginIntro: "Use one account across MiniTickets and future related apps.",
       email: "Email",
       password: "Password",
       passwordConfirm: "Confirm password",

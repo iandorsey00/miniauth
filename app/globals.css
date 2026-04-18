@@ -503,6 +503,10 @@ label {
   gap: 0.55rem;
 }
 
+.login-brand-compact {
+  gap: 0.18rem;
+}
+
 .login-brand-subtitle {
   color: var(--accent);
   font-family: "Inter", sans-serif !important;
