@@ -55,7 +55,8 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - MiniAuth now accepts a validated `returnTo` target on login and MFA verification so trusted apps such as MiniTickets can send users back to their own post-login route after successful authentication.
 - MiniAuth now also exposes a shared logout route so downstream apps can clear the shared MiniAuth session and send users back to their own sign-in screen in one step.
 - MiniAuth shared logout now requires a POST to revoke the session; `GET /logout` only renders a tiny first-party handoff page so passive cross-site requests do not trigger logout.
-- TOTP enrollment now requires the current password, and newly generated recovery codes are displayed only in the immediate post-enable flow until explicitly acknowledged.
+- TOTP enrollment now requires the current password, and newly generated recovery codes are displayed only through a dedicated one-time signed recovery route with a first-party handoff check.
+- Email verification code resend now has a cooldown, so repeated clicks do not keep issuing fresh codes immediately.
 - The app serves `robots.txt` with a full-site disallow policy.
 - Deployment and migration docs live in `docs/`:
   - `docs/deploy.md`

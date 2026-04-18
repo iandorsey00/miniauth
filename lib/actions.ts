@@ -20,7 +20,7 @@ import {
   requireUser,
   startSession,
 } from "@/lib/auth";
-import { AUTH_ROUTES } from "@/lib/constants";
+import { AUTH_COOKIES, AUTH_ROUTES } from "@/lib/constants";
 import { sendLoginCodeEmail, sendPasswordSetupEmail } from "@/lib/email";
 import { env } from "@/lib/env";
 import { hashPassword, verifyPassword } from "@/lib/password";
@@ -276,6 +276,11 @@ export async function resendLoginCodeAction(formData: FormData) {
     redirect(buildRedirectTarget(AUTH_ROUTES.login, returnTo, new URLSearchParams({ error: "invalid" })));
   }
 
+  const resendAllowedAt = challenge.createdAt.getTime() + env.loginResendCooldownSeconds * 1000;
+  if (Date.now() < resendAllowedAt) {
+    redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "resend_cooldown" })));
+  }
+
   try {
     await assertRateLimit("login_mfa_send", `${challenge.userId}|${await getClientIp()}`, 3);
   } catch {
@@ -392,6 +397,12 @@ export async function beginTotpSetupAction(formData: FormData) {
     redirect(`${AUTH_ROUTES.home}?totp=invalid`);
   }
 
+  try {
+    await assertRateLimit("totp_setup", user.id, 5);
+  } catch {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
   const passwordValid = await verifyPassword(parsed.data.password, user.passwordHash);
   if (!passwordValid) {
     redirect(`${AUTH_ROUTES.home}?totp=invalid`);
@@ -406,6 +417,7 @@ export async function beginTotpSetupAction(formData: FormData) {
     },
   });
 
+  await clearRateLimit("totp_setup", user.id);
   redirect(`${AUTH_ROUTES.home}?totp=setup`);
 }
 
@@ -417,6 +429,12 @@ export async function confirmTotpSetupAction(formData: FormData) {
   });
 
   if (!parsed.success || !user.totpPendingSecretEncrypted || !user.passwordHash) {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
+  try {
+    await assertRateLimit("totp_confirm", user.id, 5);
+  } catch {
     redirect(`${AUTH_ROUTES.home}?totp=invalid`);
   }
 
@@ -456,17 +474,18 @@ export async function confirmTotpSetupAction(formData: FormData) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     expires: recoveryCookieExpires,
-    path: AUTH_ROUTES.home,
+    path: AUTH_ROUTES.totpRecovery,
+  });
+  cookieStore.set(AUTH_COOKIES.totpRecoveryHandoff, "1", {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    expires: recoveryCookieExpires,
+    path: AUTH_ROUTES.totpRecovery,
   });
 
-  redirect(`${AUTH_ROUTES.home}?totp=enabled`);
-}
-
-export async function acknowledgeTotpRecoveryCodesAction() {
-  await requireUser();
-  const cookieStore = await cookies();
-  cookieStore.delete(env.totpRecoveryCookieName);
-  redirect(`${AUTH_ROUTES.home}?totp=ready`);
+  await clearRateLimit("totp_confirm", user.id);
+  redirect(AUTH_ROUTES.totpRecovery);
 }
 
 export async function disableTotpAction(formData: FormData) {
@@ -480,11 +499,22 @@ export async function disableTotpAction(formData: FormData) {
     redirect(`${AUTH_ROUTES.home}?totp=invalid`);
   }
 
+  try {
+    await assertRateLimit("totp_disable", user.id, 5);
+  } catch {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
   const passwordValid = await verifyPassword(parsed.data.password, user.passwordHash);
+
+  if (!passwordValid) {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
   const totpValid = verifyTotpCode(decryptTotpSecret(user.totpSecretEncrypted), parsed.data.code);
   const recoveryValid = totpValid ? false : await consumeRecoveryCode(user.id, parsed.data.code);
 
-  if (!passwordValid || (!totpValid && !recoveryValid)) {
+  if (!totpValid && !recoveryValid) {
     redirect(`${AUTH_ROUTES.home}?totp=invalid`);
   }
 
@@ -505,6 +535,7 @@ export async function disableTotpAction(formData: FormData) {
     }),
   ]);
 
+  await clearRateLimit("totp_disable", user.id);
   redirect(`${AUTH_ROUTES.home}?totp=disabled`);
 }
 

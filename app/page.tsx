@@ -1,9 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { cookies } from "next/headers";
 
 import {
-  acknowledgeTotpRecoveryCodesAction,
   beginTotpSetupAction,
   confirmTotpSetupAction,
   assignWorkspaceMembershipAction,
@@ -23,7 +21,6 @@ import {
 } from "@/lib/actions";
 import { requireUser } from "@/lib/auth";
 import { AUTH_ROUTES } from "@/lib/constants";
-import { env } from "@/lib/env";
 import { getDictionary } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
 import { buildTotpProvisioningUri, decryptTotpSecret } from "@/lib/totp";
@@ -126,9 +123,7 @@ export default async function HomePage({
   const dictionary = getDictionary(user.locale);
   const localeCode = user.locale === "ZH_CN" ? "zh-CN" : "en-US";
   const params = await searchParams;
-  const cookieStore = await cookies();
   const pendingTotpSecret = user.totpPendingSecretEncrypted ? decryptTotpSecret(user.totpPendingSecretEncrypted) : null;
-  const recoveryCodes = cookieStore.get(env.totpRecoveryCookieName)?.value?.split(",").filter(Boolean) ?? [];
   const totpRecoveryRemaining = user.totpEnabled
     ? await prisma.totpRecoveryCode.count({
         where: {
@@ -176,10 +171,6 @@ export default async function HomePage({
             </div>
       {params.preferences === "saved" ? (
         <section className="panel message-panel success-panel">{dictionary.dashboard.preferencesSaved}</section>
-      ) : null}
-
-      {params.totp === "enabled" ? (
-        <section className="panel message-panel success-panel">{dictionary.auth.totpEnabled}</section>
       ) : null}
 
       {params.totp === "ready" ? (
@@ -265,17 +256,6 @@ export default async function HomePage({
                 <div className="stack">
                   <p>{dictionary.auth.totpEnabledStatus}</p>
                   <p>{dictionary.auth.recoveryCodesRemaining.replace("{count}", String(totpRecoveryRemaining))}</p>
-                  {params.totp === "enabled" && recoveryCodes.length ? (
-                    <div className="stack">
-                      <p>{dictionary.auth.recoveryCodesTitle}</p>
-                      <div className="code-block">{recoveryCodes.join(" ")}</div>
-                      <form action={acknowledgeTotpRecoveryCodesAction}>
-                        <button className="ghost-button" type="submit">
-                          {dictionary.auth.recoveryCodesSaved}
-                        </button>
-                      </form>
-                    </div>
-                  ) : null}
                   <form className="stack" action={disableTotpAction}>
                     <div className="field">
                       <label htmlFor="disable-password">{dictionary.auth.password}</label>
@@ -474,9 +454,6 @@ export default async function HomePage({
           </div>
         </div>
         <div className="stack">
-          {params.totp === "enabled" ? (
-            <section className="panel message-panel success-panel">{dictionary.auth.totpEnabled}</section>
-          ) : null}
           {params.totp === "ready" ? (
             <section className="panel message-panel success-panel">{dictionary.auth.totpReady}</section>
           ) : null}
@@ -515,17 +492,6 @@ export default async function HomePage({
             <div className="stack">
               <p>{dictionary.auth.totpEnabledStatus}</p>
               <p>{dictionary.auth.recoveryCodesRemaining.replace("{count}", String(totpRecoveryRemaining))}</p>
-              {params.totp === "enabled" && recoveryCodes.length ? (
-                <div className="stack">
-                  <p>{dictionary.auth.recoveryCodesTitle}</p>
-                  <div className="code-block">{recoveryCodes.join(" ")}</div>
-                  <form action={acknowledgeTotpRecoveryCodesAction}>
-                    <button className="ghost-button" type="submit">
-                      {dictionary.auth.recoveryCodesSaved}
-                    </button>
-                  </form>
-                </div>
-              ) : null}
               <form className="stack" action={disableTotpAction}>
                 <div className="field">
                   <label htmlFor="totp-disable-password">{dictionary.auth.password}</label>

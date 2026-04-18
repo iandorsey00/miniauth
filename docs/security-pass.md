@@ -42,13 +42,15 @@ Changes made during the pass:
 - added authenticator-app TOTP MFA with encrypted secret storage and one-time hashed recovery codes
 - made TOTP the preferred second factor when enabled on an account, so MiniAuth no longer depends on mailbox delivery for that user’s MFA step
 - required current-password confirmation before starting or confirming TOTP enrollment, so a stolen live session cannot silently bind a new authenticator device on its own
-- limited recovery-code display to the immediate post-enable flow and added explicit acknowledgment-based clearing so the codes do not keep reappearing during normal signed-in page loads
+- limited recovery-code display to a dedicated one-time signed recovery route, backed by a first-party handoff cookie and live-session check, so the codes no longer reappear on normal signed-in page loads or render on unauthenticated GET requests
 - limited the new non-admin preferences surface to shared locale, theme, and accent updates only, with no user-management or app-access mutation capability exposed outside MiniAuth admins
 - kept shared workspace ownership limited to workspace identity and membership truth rather than moving downstream app authorization into MiniAuth
 - kept the one-off MiniTickets workspace import tool fail-closed by aborting on unresolved membership-user mappings instead of silently skipping or creating ambiguous membership records
 - kept shared preference cookies constrained to neutral value transport rather than shared CSS or UI implementation
 - kept cookie-driven root rendering limited to theme, accent, and locale presentation concerns rather than access control decisions
 - added send, resend, and verify rate-limited MFA handling with explicit send-failure cleanup
+- added an email verification resend cooldown so repeated clicks do not keep issuing fresh codes immediately
+- reordered TOTP disable validation so a valid recovery code is not consumed when the submitted password is wrong
 - kept deploy documentation placeholder-based so no private host or secret detail is committed
 - kept production secrets and deploy env values out of the repo
 

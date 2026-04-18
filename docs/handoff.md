@@ -26,7 +26,8 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - MiniAuth now also supports authenticator-app TOTP MFA with recovery codes, intended especially for admin accounts that do not want mailbox-based MFA dependency or resend-cost exposure
 - TOTP enrollment requires the current password at both setup start and confirmation time, so a stolen live session alone is not enough to bind a new authenticator device
 - successful TOTP enablement currently turns off email MFA for that account, so TOTP becomes the primary second factor there
-- recovery codes are hashed in the database, shown only in the immediate post-enable flow, and then cleared from the temporary display cookie after explicit acknowledgment
+- recovery codes are hashed in the database and shown only through a dedicated one-time recovery route immediately after TOTP enablement; that route now requires both a live signed-in MiniAuth session and a first-party handoff cookie before it renders
+- email verification code resend is now gated by a cooldown so repeated clicks do not keep issuing fresh codes immediately
 - invite/password-setup email now also uses the Resend mail path when configured, and invite or resend redirects no longer expose raw password-setup tokens in dashboard URLs; send failure now returns as status only so resend is the recovery path
 - password-setup links now land on a claim handoff that exchanges the emailed token into an HttpOnly cookie before rendering the setup form, so the raw token no longer remains in the visible form URL after arrival
 - admins can now resend a fresh password-setup invite from the dashboard for accounts that still have not set a password

@@ -1,6 +1,6 @@
 {
   "name": "miniauth",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "description": "MiniAuth - small shared login service for MiniTickets and related apps",
   "type": "module",

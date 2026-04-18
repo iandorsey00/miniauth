@@ -19,6 +19,7 @@ export const env = {
   defaultLocale: DEFAULT_LOCALE,
   sessionDays: intFromEnv(process.env.SESSION_DAYS, 14),
   loginCodeMinutes: intFromEnv(process.env.LOGIN_CODE_MINUTES, 10),
+  loginResendCooldownSeconds: intFromEnv(process.env.LOGIN_RESEND_COOLDOWN_SECONDS, 60),
   passwordSetupHours: intFromEnv(process.env.PASSWORD_SETUP_HOURS, 72),
   rateLimitWindowMinutes: intFromEnv(process.env.RATE_LIMIT_WINDOW_MINUTES, 15),
   rateLimitMaxAttempts: intFromEnv(process.env.RATE_LIMIT_MAX_ATTEMPTS, 5),

@@ -39,6 +39,8 @@ export default async function VerifyLoginPage({
       ? dictionary.auth.verifyInvalid
       : params.error === "expired"
         ? dictionary.auth.verifyExpired
+        : params.error === "resend_cooldown"
+          ? dictionary.auth.verifyResendCooldown
         : null;
   const isTotp = challenge.kind === "totp";
 
