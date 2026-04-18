@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import QRCode from "qrcode";
@@ -245,11 +244,11 @@ export default async function HomePage({
                 <div className="stack">
                   <p>{dictionary.auth.totpSetupHint}</p>
                   <div className="totp-qr-card">
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       alt={dictionary.auth.totpQrAlt}
                       className="totp-qr-image"
                       height={224}
-                      unoptimized
                       src={totpSetupDetails.qrCodeDataUrl}
                       width={224}
                     />
@@ -491,11 +490,11 @@ export default async function HomePage({
             <div className="stack">
               <p>{dictionary.auth.totpSetupHint}</p>
               <div className="totp-qr-card">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   alt={dictionary.auth.totpQrAlt}
                   className="totp-qr-image"
                   height={224}
-                  unoptimized
                   src={totpSetupDetails.qrCodeDataUrl}
                   width={224}
                 />
