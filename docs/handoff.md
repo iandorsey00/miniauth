@@ -27,6 +27,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - TOTP enrollment requires the current password at both setup start and confirmation time, so a stolen live session alone is not enough to bind a new authenticator device
 - successful TOTP enablement currently turns off email MFA for that account, so TOTP becomes the primary second factor there
 - TOTP setup now shows a locally generated QR code for authenticator apps, while still keeping the raw secret and provisioning URI visible as fallback for manual entry
+- the TOTP setup code blocks now wrap long provisioning URIs cleanly instead of stretching the preferences or dashboard panels
 - recovery codes are hashed in the database and shown only through a dedicated one-time recovery route immediately after TOTP enablement; that route now requires both a live signed-in MiniAuth session and a first-party handoff cookie before it renders
 - email verification code resend is now gated by a cooldown so repeated clicks do not keep issuing fresh codes immediately
 - invite/password-setup email now also uses the Resend mail path when configured, and invite or resend redirects no longer expose raw password-setup tokens in dashboard URLs; send failure now returns as status only so resend is the recovery path
@@ -58,6 +59,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - dark-mode card, form, note, and panel surfaces have also been rebalanced so the dashboard reads more cleanly in dark theme without the earlier light-biased overlay feel
 - the app serves a site-wide `robots.txt` disallow so search engines are asked not to index MiniAuth
 - deployment docs intentionally use placeholders and examples only; keep private host and secret details in private runbooks or server-local env files
+- the deploy script now mirrors the MiniTickets flow more closely, including restoring server-local `package-lock.json` drift before pull and retrying the final health check instead of failing on the first transient public 502
 - use [deploy.md](/Users/iandorsey/dev/miniauth/docs/deploy.md) for build, deploy, health-check, and rollback steps
 - use [minitickets-migration.md](/Users/iandorsey/dev/miniauth/docs/minitickets-migration.md) for the MiniTickets integration path
 

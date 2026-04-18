@@ -49,11 +49,18 @@ Prefer the deploy script over ad hoc shell history:
 
 The script expects a server-local env file path and will:
 
+- restore accidental server-local `package-lock.json` drift before pulling
+- fetch, checkout, and fast-forward the requested branch
 - install exact dependencies with `npm ci --include=dev`
 - build the app
 - push the Prisma schema
 - restart the systemd service
-- optionally run a final health check if `MINIAUTH_HEALTHCHECK_URL` is set
+- optionally run a retrying final health check if `MINIAUTH_HEALTHCHECK_URL` is set
+
+Health check retry tuning:
+
+- `MINIAUTH_HEALTHCHECK_ATTEMPTS` defaults to `10`
+- `MINIAUTH_HEALTHCHECK_SLEEP_SECONDS` defaults to `3`
 
 ## Health check
 

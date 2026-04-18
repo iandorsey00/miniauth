@@ -753,6 +753,17 @@ h3 {
   font-size: 0.84rem;
 }
 
+.code-block {
+  display: block;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  background: var(--surface-code);
+  border-radius: 18px;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+}
+
 .totp-qr-card {
   display: inline-flex;
   align-items: center;
