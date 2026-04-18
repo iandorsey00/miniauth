@@ -40,6 +40,7 @@ export default async function VerifyLoginPage({
       : params.error === "expired"
         ? dictionary.auth.verifyExpired
         : null;
+  const isTotp = challenge.kind === "totp";
 
   return (
     <div className="auth-page">
@@ -59,9 +60,9 @@ export default async function VerifyLoginPage({
           <div className="stack">
             <h2>{dictionary.auth.verifyTitle}</h2>
             <p className="lede login-intro">
-              {dictionary.auth.verifyIntro} {maskEmail(challenge.user.email)}
+              {isTotp ? dictionary.auth.totpVerifyIntro : `${dictionary.auth.verifyIntro} ${maskEmail(challenge.user.email)}`}
             </p>
-            {params.sent === "1" ? (
+            {!isTotp && params.sent === "1" ? (
               <div className="success-note">
                 {dictionary.auth.verifySent}
                 {previewCode ? (
@@ -75,25 +76,27 @@ export default async function VerifyLoginPage({
             <form action={verifyLoginCodeAction}>
               {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
               <div className="field">
-                <label htmlFor="code">{dictionary.auth.verificationCode}</label>
+                <label htmlFor="code">{isTotp ? dictionary.auth.totpOrRecoveryCode : dictionary.auth.verificationCode}</label>
                 <input
                   id="code"
                   name="code"
                   type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
+                  inputMode={isTotp ? "text" : "numeric"}
+                  pattern={isTotp ? undefined : "[0-9]{6}"}
+                  maxLength={isTotp ? 12 : 6}
                   required
                 />
               </div>
               <button type="submit">{dictionary.auth.verifySubmit}</button>
             </form>
-            <form action={resendLoginCodeAction}>
-              {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
-              <button className="ghost-button full-width" type="submit">
-                {dictionary.auth.resendCode}
-              </button>
-            </form>
+            {!isTotp ? (
+              <form action={resendLoginCodeAction}>
+                {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
+                <button className="ghost-button full-width" type="submit">
+                  {dictionary.auth.resendCode}
+                </button>
+              </form>
+            ) : null}
           </div>
         </section>
       </div>

@@ -24,6 +24,8 @@ export const env = {
   rateLimitMaxAttempts: intFromEnv(process.env.RATE_LIMIT_MAX_ATTEMPTS, 5),
   authCookieName: process.env.AUTH_COOKIE_NAME || "miniauth_session",
   loginChallengeCookieName: process.env.AUTH_LOGIN_CHALLENGE_COOKIE_NAME || "miniauth_login_challenge",
+  passwordSetupCookieName: process.env.AUTH_PASSWORD_SETUP_COOKIE_NAME || "miniauth_password_setup",
+  totpRecoveryCookieName: process.env.AUTH_TOTP_RECOVERY_COOKIE_NAME || "miniauth_totp_recovery",
   authSharedCookieDomain: process.env.AUTH_SHARED_COOKIE_DOMAIN || "",
   sharedLocaleCookieName: process.env.SHARED_LOCALE_COOKIE_NAME || "mini_locale",
   sharedThemeCookieName: process.env.SHARED_THEME_COOKIE_NAME || "mini_theme",

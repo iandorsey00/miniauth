@@ -7,6 +7,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - local-account sign-in
 - password setup links
 - optional email-code MFA
+- optional authenticator-app TOTP MFA with recovery codes
 - session issuance and revocation
 - app access grants
 - account active or inactive state
@@ -31,7 +32,9 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 ## Notes
 
 - MFA email-code delivery now supports Resend. In development, the current login code is still shown on the verify page when mail delivery is not configured.
+- MiniAuth now also supports authenticator-app TOTP MFA with one-time recovery codes. For production, set `AUTH_TOTP_ENCRYPTION_KEY` before enabling it.
 - Invite flow now sends the password setup email directly when mail delivery is configured, without exposing raw password-setup tokens in dashboard redirect URLs; failures return a simple send-failure state so resend is the recovery path after mail is fixed.
+- Password-setup links now land on a claim handoff route that exchanges the emailed token into an HttpOnly cookie before rendering the password form, so the raw token no longer remains in the visible setup page URL after entry.
 - Admins can now resend a fresh password-setup invite from the MiniAuth dashboard for accounts that still have not set a password.
 - App-local authorization is intentionally left to downstream apps; MiniAuth owns identity and session basics.
 - Existing accounts can now have email MFA enabled or disabled directly from the MiniAuth admin dashboard.
@@ -52,6 +55,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - MiniAuth now accepts a validated `returnTo` target on login and MFA verification so trusted apps such as MiniTickets can send users back to their own post-login route after successful authentication.
 - MiniAuth now also exposes a shared logout route so downstream apps can clear the shared MiniAuth session and send users back to their own sign-in screen in one step.
 - MiniAuth shared logout now requires a POST to revoke the session; `GET /logout` only renders a tiny first-party handoff page so passive cross-site requests do not trigger logout.
+- TOTP enrollment now requires the current password, and newly generated recovery codes are displayed only in the immediate post-enable flow until explicitly acknowledged.
 - The app serves `robots.txt` with a full-site disallow policy.
 - Deployment and migration docs live in `docs/`:
   - `docs/deploy.md`

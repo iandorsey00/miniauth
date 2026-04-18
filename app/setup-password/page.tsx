@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { setupPasswordAction } from "@/lib/actions";
+import { AUTH_ROUTES } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { getDictionary } from "@/lib/i18n";
 
@@ -13,6 +15,9 @@ export default async function SetupPasswordPage({
   const cookieStore = await cookies();
   const locale = (cookieStore.get(env.sharedLocaleCookieName)?.value || env.defaultLocale).toUpperCase();
   const dictionary = getDictionary(locale === "ZH_CN" ? "ZH_CN" : "EN");
+  if (params.token) {
+    redirect(`${AUTH_ROUTES.setupPassword}/claim?token=${encodeURIComponent(params.token)}`);
+  }
   const errorMessage =
     params.error === "password_mismatch"
       ? dictionary.auth.passwordMismatch
@@ -41,7 +46,6 @@ export default async function SetupPasswordPage({
             </div>
             {errorMessage ? <div className="error-note">{errorMessage}</div> : null}
             <form className="stack" action={setupPasswordAction}>
-              <input name="token" type="hidden" value={params.token ?? ""} />
               <div className="field">
                 <label htmlFor="password">{dictionary.auth.password}</label>
                 <input id="password" name="password" type="password" minLength={8} required />

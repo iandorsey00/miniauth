@@ -7,6 +7,7 @@ Scope reviewed:
 - local-account sign-in
 - password setup tokens
 - login email challenges
+- TOTP secret storage, TOTP login challenges, and recovery codes
 - session issuance and revocation
 - admin-only invite and session-revoke actions
 - auth and dashboard presentation refresh
@@ -29,6 +30,7 @@ Changes made during the pass:
 
 - removed MFA code leakage through redirect query parameters
 - removed password-setup token leakage through invite and resend redirect query parameters so the MiniAuth dashboard no longer rebuilds setup links from URL state
+- moved password-setup entry onto a claim handoff route so emailed setup tokens are exchanged into an HttpOnly cookie before the password form loads, instead of remaining in the visible setup page URL during normal use
 - limited invite and session-revocation actions to MiniAuth admins
 - limited existing-user MFA toggles to MiniAuth admins
 - limited existing-user enable/disable control to MiniAuth admins and revoked active shared sessions on disable so inactive accounts cannot continue through stale MiniAuth sessions
@@ -37,6 +39,10 @@ Changes made during the pass:
 - limited cross-app post-login redirects to MiniAuth-relative paths, MiniAuth itself, or explicitly allowlisted trusted origins
 - kept shared logout redirects on the same validated return-target path so sign-out does not introduce a separate open-redirect surface
 - changed shared logout so GET no longer revokes the session; a POST is now required for real logout, with the same validated return-target behavior preserved after the POST completes
+- added authenticator-app TOTP MFA with encrypted secret storage and one-time hashed recovery codes
+- made TOTP the preferred second factor when enabled on an account, so MiniAuth no longer depends on mailbox delivery for that user’s MFA step
+- required current-password confirmation before starting or confirming TOTP enrollment, so a stolen live session cannot silently bind a new authenticator device on its own
+- limited recovery-code display to the immediate post-enable flow and added explicit acknowledgment-based clearing so the codes do not keep reappearing during normal signed-in page loads
 - limited the new non-admin preferences surface to shared locale, theme, and accent updates only, with no user-management or app-access mutation capability exposed outside MiniAuth admins
 - kept shared workspace ownership limited to workspace identity and membership truth rather than moving downstream app authorization into MiniAuth
 - kept the one-off MiniTickets workspace import tool fail-closed by aborting on unresolved membership-user mappings instead of silently skipping or creating ambiguous membership records
@@ -50,6 +56,7 @@ Open follow-ups:
 
 - add a real email delivery provider before production MFA or invite use
 - consider audit logging for admin auth actions
+- consider replacing the temporary recovery-code cookie display step later with a dedicated one-time download or print flow if operator UX needs to become more polished
 - consider a dedicated signed identity handoff endpoint for MiniTickets integration if shared cookies are not practical
 - consider a dedicated shared-preferences update surface so apps do not need to mutate parent-domain cookies independently
 - consider whether login and invite mail delivery should share a single higher-level mail module once MiniAuth sends all auth emails directly

@@ -55,12 +55,17 @@ model User {
   accentColor         AccentColor           @default(BLUE)
   isActive            Boolean               @default(true)
   emailMfaEnabled     Boolean               @default(false)
+  totpEnabled         Boolean               @default(false)
+  totpSecretEncrypted String?
+  totpPendingSecretEncrypted String?
   lastLoginAt         DateTime?
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   sessions            Session[]
   passwordSetupTokens PasswordSetupToken[]
   loginEmailChallenges LoginEmailChallenge[]
+  loginTotpChallenges LoginTotpChallenge[]
+  totpRecoveryCodes   TotpRecoveryCode[]
   appAccess           AppAccess[]
   memberships         WorkspaceMembership[]
 }
@@ -101,6 +106,29 @@ model LoginEmailChallenge {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
+}
+
+model LoginTotpChallenge {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model TotpRecoveryCode {
+  id        String   @id @default(cuid())
+  userId    String
+  codeHash  String   @unique
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, usedAt])
 }
 
 model AuthRateLimit {

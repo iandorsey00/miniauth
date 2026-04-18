@@ -10,6 +10,8 @@ function toRedirectUrl(target: string) {
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const returnTo = getValidatedReturnTo(requestUrl.searchParams.get("returnTo"));
+  const fetchSite = request.headers.get("sec-fetch-site");
+  const canAutoSubmit = fetchSite === "same-origin" || fetchSite === "same-site" || fetchSite === "none";
   const html = `<!doctype html>
 <html lang="en">
   <head>
@@ -24,9 +26,13 @@ export async function GET(request: Request) {
         <button type="submit">Continue logout</button>
       </noscript>
     </form>
-    <script>
+    ${
+      canAutoSubmit
+        ? `<script>
       document.getElementById('logout-form')?.submit();
-    </script>
+    </script>`
+        : `<p>Continue logout</p>`
+    }
   </body>
 </html>`;
 
@@ -40,6 +46,14 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const origin = request.headers.get("origin");
+  if (origin) {
+    const allowedOrigin = new URL(env.baseUrl).origin;
+    if (origin !== allowedOrigin) {
+      return new Response("Invalid logout origin", { status: 400 });
+    }
+  }
+
   const formData = await request.formData();
   const returnTo = getValidatedReturnTo(formData.get("returnTo"));
 

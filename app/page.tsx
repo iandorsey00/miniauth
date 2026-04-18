@@ -1,9 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { cookies } from "next/headers";
 
 import {
+  acknowledgeTotpRecoveryCodesAction,
+  beginTotpSetupAction,
+  confirmTotpSetupAction,
   assignWorkspaceMembershipAction,
   createWorkspaceAction,
+  disableTotpAction,
   inviteUserAction,
   logoutAction,
   removeWorkspaceMembershipAction,
@@ -18,8 +23,10 @@ import {
 } from "@/lib/actions";
 import { requireUser } from "@/lib/auth";
 import { AUTH_ROUTES } from "@/lib/constants";
+import { env } from "@/lib/env";
 import { getDictionary } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
+import { buildTotpProvisioningUri, decryptTotpSecret } from "@/lib/totp";
 
 const localeValues = ["EN", "ZH_CN"] as const;
 const themeValues = ["SYSTEM", "LIGHT", "DARK"] as const;
@@ -77,6 +84,29 @@ function BrandHeader({
   );
 }
 
+function getTotpSetupDetails({
+  appName,
+  email,
+  pendingSecret,
+}: {
+  appName: string;
+  email: string;
+  pendingSecret: string | null;
+}) {
+  if (!pendingSecret) {
+    return null;
+  }
+
+  return {
+    secret: pendingSecret,
+    provisioningUri: buildTotpProvisioningUri({
+      issuer: appName,
+      accountName: email,
+      secret: pendingSecret,
+    }),
+  };
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -87,6 +117,7 @@ export default async function HomePage({
     account?: string;
     access?: string;
     preferences?: string;
+    totp?: string;
     workspace?: string;
     membership?: string;
   }>;
@@ -95,6 +126,22 @@ export default async function HomePage({
   const dictionary = getDictionary(user.locale);
   const localeCode = user.locale === "ZH_CN" ? "zh-CN" : "en-US";
   const params = await searchParams;
+  const cookieStore = await cookies();
+  const pendingTotpSecret = user.totpPendingSecretEncrypted ? decryptTotpSecret(user.totpPendingSecretEncrypted) : null;
+  const recoveryCodes = cookieStore.get(env.totpRecoveryCookieName)?.value?.split(",").filter(Boolean) ?? [];
+  const totpRecoveryRemaining = user.totpEnabled
+    ? await prisma.totpRecoveryCode.count({
+        where: {
+          userId: user.id,
+          usedAt: null,
+        },
+      })
+    : 0;
+  const totpSetupDetails = getTotpSetupDetails({
+    appName: dictionary.appName,
+    email: user.email,
+    pendingSecret: pendingTotpSecret,
+  });
 
   const bootstrapAdminCount = await prisma.appAccess.count({
     where: {
@@ -127,9 +174,25 @@ export default async function HomePage({
                 <p>{dictionary.dashboard.preferencesSubtitle}</p>
               </div>
             </div>
-            {params.preferences === "saved" ? (
-              <section className="panel message-panel success-panel">{dictionary.dashboard.preferencesSaved}</section>
-            ) : null}
+      {params.preferences === "saved" ? (
+        <section className="panel message-panel success-panel">{dictionary.dashboard.preferencesSaved}</section>
+      ) : null}
+
+      {params.totp === "enabled" ? (
+        <section className="panel message-panel success-panel">{dictionary.auth.totpEnabled}</section>
+      ) : null}
+
+      {params.totp === "ready" ? (
+        <section className="panel message-panel success-panel">{dictionary.auth.totpReady}</section>
+      ) : null}
+
+      {params.totp === "disabled" ? (
+        <section className="panel message-panel success-panel">{dictionary.auth.totpDisabled}</section>
+      ) : null}
+
+      {params.totp === "invalid" ? (
+        <section className="panel message-panel error-note">{dictionary.auth.totpInvalid}</section>
+      ) : null}
             <form className="stack" action={updateSelfPreferencesAction}>
               <div className="field">
                 <label htmlFor="locale">{dictionary.common.language}</label>
@@ -167,6 +230,82 @@ export default async function HomePage({
               </div>
               <button type="submit">{dictionary.common.save}</button>
             </form>
+            <section className="panel note-card">
+              <div className="section-heading">
+                <div>
+                  <h2>{dictionary.auth.totpTitle}</h2>
+                  <p>{dictionary.auth.totpIntro}</p>
+                </div>
+              </div>
+              {totpSetupDetails ? (
+                <div className="stack">
+                  <p className="code-block">{totpSetupDetails.secret}</p>
+                  <p className="code-block">{totpSetupDetails.provisioningUri}</p>
+                  <form className="inline-form" action={confirmTotpSetupAction}>
+                    <input
+                      aria-label={dictionary.auth.password}
+                      name="password"
+                      type="password"
+                      minLength={8}
+                      placeholder={dictionary.auth.password}
+                      required
+                    />
+                    <input
+                      aria-label={dictionary.auth.totpCode}
+                      name="code"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="123456"
+                      required
+                    />
+                    <button type="submit">{dictionary.auth.confirmTotp}</button>
+                  </form>
+                </div>
+              ) : user.totpEnabled ? (
+                <div className="stack">
+                  <p>{dictionary.auth.totpEnabledStatus}</p>
+                  <p>{dictionary.auth.recoveryCodesRemaining.replace("{count}", String(totpRecoveryRemaining))}</p>
+                  {params.totp === "enabled" && recoveryCodes.length ? (
+                    <div className="stack">
+                      <p>{dictionary.auth.recoveryCodesTitle}</p>
+                      <div className="code-block">{recoveryCodes.join(" ")}</div>
+                      <form action={acknowledgeTotpRecoveryCodesAction}>
+                        <button className="ghost-button" type="submit">
+                          {dictionary.auth.recoveryCodesSaved}
+                        </button>
+                      </form>
+                    </div>
+                  ) : null}
+                  <form className="stack" action={disableTotpAction}>
+                    <div className="field">
+                      <label htmlFor="disable-password">{dictionary.auth.password}</label>
+                      <input id="disable-password" name="password" type="password" minLength={8} required />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="disable-code">{dictionary.auth.totpOrRecoveryCode}</label>
+                      <input id="disable-code" name="code" type="text" required />
+                    </div>
+                    <button className="ghost-button" type="submit">
+                      {dictionary.auth.disableTotp}
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <form className="stack" action={beginTotpSetupAction}>
+                  <div className="field">
+                    <label htmlFor="begin-totp-password">{dictionary.auth.password}</label>
+                    <input
+                      id="begin-totp-password"
+                      name="password"
+                      type="password"
+                      minLength={8}
+                      required
+                    />
+                  </div>
+                  <button type="submit">{dictionary.auth.startTotpSetup}</button>
+                </form>
+              )}
+            </section>
             <form action={logoutAction}>
               <button className="ghost-button" type="submit">
                 {dictionary.nav.logout}
@@ -233,7 +372,7 @@ export default async function HomePage({
   ]);
 
   const activeUsers = users.filter((account) => account.isActive).length;
-  const mfaUsers = users.filter((account) => account.emailMfaEnabled).length;
+  const mfaUsers = users.filter((account) => account.emailMfaEnabled || account.totpEnabled).length;
   const grantedApps = new Set(users.flatMap((account) => account.appAccess.map((access) => access.appKey))).size;
   const pendingUsers = users.filter((account) => !account.passwordHash).length;
 
@@ -323,6 +462,93 @@ export default async function HomePage({
         <div className="overview-card">
           <span className="overview-label">{dictionary.dashboard.workspaces}</span>
           <strong>{workspaces.length}</strong>
+        </div>
+      </section>
+
+      <section className="panel panel-wide">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">{dictionary.dashboard.preferencesTitle}</p>
+            <h2>{dictionary.auth.totpTitle}</h2>
+            <p>{dictionary.auth.totpIntro}</p>
+          </div>
+        </div>
+        <div className="stack">
+          {params.totp === "enabled" ? (
+            <section className="panel message-panel success-panel">{dictionary.auth.totpEnabled}</section>
+          ) : null}
+          {params.totp === "ready" ? (
+            <section className="panel message-panel success-panel">{dictionary.auth.totpReady}</section>
+          ) : null}
+          {params.totp === "disabled" ? (
+            <section className="panel message-panel success-panel">{dictionary.auth.totpDisabled}</section>
+          ) : null}
+          {params.totp === "invalid" ? (
+            <section className="panel message-panel error-note">{dictionary.auth.totpInvalid}</section>
+          ) : null}
+          {totpSetupDetails ? (
+            <div className="stack">
+              <p>{dictionary.auth.totpSetupHint}</p>
+              <div className="code-block">{totpSetupDetails.secret}</div>
+              <div className="code-block">{totpSetupDetails.provisioningUri}</div>
+              <form className="inline-form" action={confirmTotpSetupAction}>
+                <input
+                  aria-label={dictionary.auth.password}
+                  name="password"
+                  type="password"
+                  minLength={8}
+                  placeholder={dictionary.auth.password}
+                  required
+                />
+                <input
+                  aria-label={dictionary.auth.totpCode}
+                  name="code"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="123456"
+                  required
+                />
+                <button type="submit">{dictionary.auth.confirmTotp}</button>
+              </form>
+            </div>
+          ) : user.totpEnabled ? (
+            <div className="stack">
+              <p>{dictionary.auth.totpEnabledStatus}</p>
+              <p>{dictionary.auth.recoveryCodesRemaining.replace("{count}", String(totpRecoveryRemaining))}</p>
+              {params.totp === "enabled" && recoveryCodes.length ? (
+                <div className="stack">
+                  <p>{dictionary.auth.recoveryCodesTitle}</p>
+                  <div className="code-block">{recoveryCodes.join(" ")}</div>
+                  <form action={acknowledgeTotpRecoveryCodesAction}>
+                    <button className="ghost-button" type="submit">
+                      {dictionary.auth.recoveryCodesSaved}
+                    </button>
+                  </form>
+                </div>
+              ) : null}
+              <form className="stack" action={disableTotpAction}>
+                <div className="field">
+                  <label htmlFor="totp-disable-password">{dictionary.auth.password}</label>
+                  <input id="totp-disable-password" name="password" type="password" minLength={8} required />
+                </div>
+                <div className="field">
+                  <label htmlFor="totp-disable-code">{dictionary.auth.totpOrRecoveryCode}</label>
+                  <input id="totp-disable-code" name="code" type="text" required />
+                </div>
+                <button className="ghost-button" type="submit">
+                  {dictionary.auth.disableTotp}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <form className="stack" action={beginTotpSetupAction}>
+              <div className="field">
+                <label htmlFor="totp-begin-password">{dictionary.auth.password}</label>
+                <input id="totp-begin-password" name="password" type="password" minLength={8} required />
+              </div>
+              <button type="submit">{dictionary.auth.startTotpSetup}</button>
+            </form>
+          )}
         </div>
       </section>
 
@@ -424,6 +650,7 @@ export default async function HomePage({
                 <div className="meta-grid">
                   <span><strong>{dictionary.common.locale}</strong><br />{account.locale}</span>
                   <span><strong>{dictionary.common.mfa}</strong><br />{account.emailMfaEnabled ? dictionary.common.yes : dictionary.common.no}</span>
+                  <span><strong>{dictionary.common.totp}</strong><br />{account.totpEnabled ? dictionary.common.yes : dictionary.common.no}</span>
                   <span><strong>{dictionary.common.passwordSet}</strong><br />{account.passwordHash ? dictionary.common.yes : dictionary.common.no}</span>
                   <span><strong>{dictionary.common.createdAt}</strong><br />{formatDate(account.createdAt, localeCode)}</span>
                 </div>

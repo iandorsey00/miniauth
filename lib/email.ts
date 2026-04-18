@@ -149,7 +149,7 @@ function buildLoginCodeEmail({ recipient, code }: LoginCodeEmailInput): BuiltEma
 }
 
 function buildPasswordSetupEmail({ recipient, setupToken }: PasswordSetupEmailInput): BuiltEmail {
-  const setupUrl = `${getBaseUrl()}/setup-password?token=${encodeURIComponent(setupToken)}`;
+  const setupUrl = `${getBaseUrl()}/setup-password/claim?token=${encodeURIComponent(setupToken)}`;
 
   if (recipient.locale === "EN") {
     return {

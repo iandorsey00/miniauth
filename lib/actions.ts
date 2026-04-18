@@ -4,12 +4,14 @@ import crypto from "node:crypto";
 
 import { AccentColor, AppAccessRole, AppAccessState, Locale, ThemePreference, WorkspaceRole } from "@prisma/client";
 import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import {
   clearLoginChallenge,
   createLoginChallenge,
+  createTotpLoginChallenge,
   destroySession,
   getCurrentUser,
   getPendingLoginChallenge,
@@ -20,12 +22,22 @@ import {
 } from "@/lib/auth";
 import { AUTH_ROUTES } from "@/lib/constants";
 import { sendLoginCodeEmail, sendPasswordSetupEmail } from "@/lib/email";
+import { env } from "@/lib/env";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { createPasswordSetupToken, hashPasswordSetupToken } from "@/lib/password-setup";
 import { prisma } from "@/lib/prisma";
 import { assertRateLimit, clearRateLimit } from "@/lib/rate-limit";
 import { buildRedirectTarget, getPostLoginRedirectTarget, getValidatedReturnTo } from "@/lib/return-to";
 import { sha256 } from "@/lib/tokens";
+import {
+  buildTotpProvisioningUri,
+  decryptTotpSecret,
+  encryptTotpSecret,
+  generateRecoveryCodes,
+  generateTotpSecret,
+  normalizeRecoveryCode,
+  verifyTotpCode,
+} from "@/lib/totp";
 
 const loginSchema = z.object({
   email: z.email(),
@@ -33,11 +45,10 @@ const loginSchema = z.object({
 });
 
 const verifyLoginSchema = z.object({
-  code: z.string().regex(/^\d{6}$/),
+  code: z.string().trim().min(6).max(12),
 });
 
 const setupPasswordSchema = z.object({
-  token: z.string().min(20),
   password: z.string().min(8),
   passwordConfirm: z.string().min(8),
 });
@@ -80,6 +91,24 @@ const selfPreferencesSchema = z.object({
   accentColor: z.nativeEnum(AccentColor),
 });
 
+const totpCodeSchema = z.object({
+  code: z.string().trim().min(6).max(12),
+});
+
+const beginTotpSchema = z.object({
+  password: z.string().min(8),
+});
+
+const confirmTotpSchema = z.object({
+  password: z.string().min(8),
+  code: z.string().trim().min(6).max(12),
+});
+
+const disableTotpSchema = z.object({
+  password: z.string().min(8),
+  code: z.string().trim().min(6).max(12),
+});
+
 async function getClientIp() {
   const headerStore = await headers();
   const forwarded = headerStore.get("x-forwarded-for");
@@ -87,6 +116,27 @@ async function getClientIp() {
     return forwarded.split(",")[0]?.trim() || "unknown";
   }
   return headerStore.get("x-real-ip") || "unknown";
+}
+
+async function consumeRecoveryCode(userId: string, code: string) {
+  const normalized = normalizeRecoveryCode(code);
+  if (normalized.length !== 8) {
+    return false;
+  }
+
+  const codeHash = sha256(normalized);
+  const result = await prisma.totpRecoveryCode.updateMany({
+    where: {
+      userId,
+      codeHash,
+      usedAt: null,
+    },
+    data: {
+      usedAt: new Date(),
+    },
+  });
+
+  return result.count > 0;
 }
 
 export async function loginAction(formData: FormData) {
@@ -126,6 +176,12 @@ export async function loginAction(formData: FormData) {
   const validPassword = await verifyPassword(parsed.data.password, user.passwordHash);
   if (!validPassword) {
     redirect(buildRedirectTarget(AUTH_ROUTES.login, returnTo, new URLSearchParams({ error: "invalid" })));
+  }
+
+  if (user.totpEnabled) {
+    await createTotpLoginChallenge(user.id);
+    await clearRateLimit("login", `${email}|${clientIp}`);
+    redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo));
   }
 
   if (user.emailMfaEnabled) {
@@ -175,14 +231,31 @@ export async function verifyLoginCodeAction(formData: FormData) {
     redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "expired" })));
   }
 
-  if (challenge.codeHash !== sha256(parsed.data.code)) {
-    redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "invalid" })));
-  }
+  if (challenge.kind === "email") {
+    if (challenge.codeHash !== sha256(parsed.data.code.trim())) {
+      redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "invalid" })));
+    }
 
-  await prisma.loginEmailChallenge.update({
-    where: { id: challenge.id },
-    data: { usedAt: new Date() },
-  });
+    await prisma.loginEmailChallenge.update({
+      where: { id: challenge.id },
+      data: { usedAt: new Date() },
+    });
+  } else {
+    const secretEncrypted = challenge.user.totpSecretEncrypted;
+    const submittedCode = parsed.data.code.trim();
+    const verifiedWithTotp =
+      secretEncrypted ? verifyTotpCode(decryptTotpSecret(secretEncrypted), submittedCode) : false;
+    const verifiedWithRecovery = verifiedWithTotp ? false : await consumeRecoveryCode(challenge.userId, submittedCode);
+
+    if (!verifiedWithTotp && !verifiedWithRecovery) {
+      redirect(buildRedirectTarget(AUTH_ROUTES.verify, returnTo, new URLSearchParams({ error: "invalid" })));
+    }
+
+    await prisma.loginTotpChallenge.update({
+      where: { id: challenge.id },
+      data: { usedAt: new Date() },
+    });
+  }
 
   await clearRateLimit("login_mfa_verify", `${challenge.tokenHash}|${await getClientIp()}`);
   await clearLoginChallenge();
@@ -199,7 +272,7 @@ export async function resendLoginCodeAction(formData: FormData) {
   const returnTo = getValidatedReturnTo(formData.get("returnTo"));
   const challenge = await getPendingLoginChallenge();
 
-  if (!challenge) {
+  if (!challenge || challenge.kind !== "email") {
     redirect(buildRedirectTarget(AUTH_ROUTES.login, returnTo, new URLSearchParams({ error: "invalid" })));
   }
 
@@ -229,28 +302,30 @@ export async function resendLoginCodeAction(formData: FormData) {
 }
 
 export async function setupPasswordAction(formData: FormData) {
+  const cookieStore = await cookies();
+  const rawToken = cookieStore.get(process.env.AUTH_PASSWORD_SETUP_COOKIE_NAME || "miniauth_password_setup")?.value ?? "";
   const parsed = setupPasswordSchema.safeParse({
-    token: formData.get("token"),
     password: formData.get("password"),
     passwordConfirm: formData.get("passwordConfirm"),
   });
 
-  if (!parsed.success) {
+  if (!parsed.success || rawToken.length < 20) {
     redirect(`${AUTH_ROUTES.setupPassword}?error=invalid`);
   }
 
   if (parsed.data.password !== parsed.data.passwordConfirm) {
-    redirect(`${AUTH_ROUTES.setupPassword}?error=password_mismatch&token=${encodeURIComponent(parsed.data.token)}`);
+    redirect(`${AUTH_ROUTES.setupPassword}?error=password_mismatch`);
   }
 
   const setupToken = await prisma.passwordSetupToken.findUnique({
     where: {
-      tokenHash: hashPasswordSetupToken(parsed.data.token),
+      tokenHash: hashPasswordSetupToken(rawToken),
     },
     include: { user: true },
   });
 
   if (!setupToken || setupToken.usedAt || setupToken.expiresAt < new Date() || !setupToken.user.isActive) {
+    cookieStore.delete(process.env.AUTH_PASSWORD_SETUP_COOKIE_NAME || "miniauth_password_setup");
     redirect(`${AUTH_ROUTES.setupPassword}?error=expired`);
   }
 
@@ -266,6 +341,8 @@ export async function setupPasswordAction(formData: FormData) {
       data: { usedAt: new Date() },
     }),
   ]);
+
+  cookieStore.delete(process.env.AUTH_PASSWORD_SETUP_COOKIE_NAME || "miniauth_password_setup");
 
   redirect(`${AUTH_ROUTES.login}?setup=1`);
 }
@@ -303,6 +380,132 @@ export async function updateSelfPreferencesAction(formData: FormData) {
   });
 
   redirect(`${AUTH_ROUTES.home}?preferences=saved`);
+}
+
+export async function beginTotpSetupAction(formData: FormData) {
+  const user = await requireUser();
+  const parsed = beginTotpSchema.safeParse({
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success || !user.passwordHash) {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
+  const passwordValid = await verifyPassword(parsed.data.password, user.passwordHash);
+  if (!passwordValid) {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
+  const secret = generateTotpSecret();
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      totpPendingSecretEncrypted: encryptTotpSecret(secret),
+    },
+  });
+
+  redirect(`${AUTH_ROUTES.home}?totp=setup`);
+}
+
+export async function confirmTotpSetupAction(formData: FormData) {
+  const user = await requireUser();
+  const parsed = confirmTotpSchema.safeParse({
+    password: formData.get("password"),
+    code: formData.get("code"),
+  });
+
+  if (!parsed.success || !user.totpPendingSecretEncrypted || !user.passwordHash) {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
+  const passwordValid = await verifyPassword(parsed.data.password, user.passwordHash);
+  const secret = decryptTotpSecret(user.totpPendingSecretEncrypted);
+  if (!passwordValid || !verifyTotpCode(secret, parsed.data.code)) {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
+  const recoveryCodes = generateRecoveryCodes();
+  const cookieStore = await cookies();
+  const recoveryCookieExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: {
+        totpEnabled: true,
+        totpSecretEncrypted: user.totpPendingSecretEncrypted,
+        totpPendingSecretEncrypted: null,
+        emailMfaEnabled: false,
+      },
+    }),
+    prisma.totpRecoveryCode.deleteMany({
+      where: { userId: user.id },
+    }),
+    prisma.totpRecoveryCode.createMany({
+      data: recoveryCodes.map((code) => ({
+        userId: user.id,
+        codeHash: sha256(normalizeRecoveryCode(code)),
+      })),
+    }),
+  ]);
+
+  cookieStore.set(env.totpRecoveryCookieName, recoveryCodes.join(","), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    expires: recoveryCookieExpires,
+    path: AUTH_ROUTES.home,
+  });
+
+  redirect(`${AUTH_ROUTES.home}?totp=enabled`);
+}
+
+export async function acknowledgeTotpRecoveryCodesAction() {
+  await requireUser();
+  const cookieStore = await cookies();
+  cookieStore.delete(env.totpRecoveryCookieName);
+  redirect(`${AUTH_ROUTES.home}?totp=ready`);
+}
+
+export async function disableTotpAction(formData: FormData) {
+  const user = await requireUser();
+  const parsed = disableTotpSchema.safeParse({
+    password: formData.get("password"),
+    code: formData.get("code"),
+  });
+
+  if (!parsed.success || !user.passwordHash || !user.totpEnabled || !user.totpSecretEncrypted) {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
+  const passwordValid = await verifyPassword(parsed.data.password, user.passwordHash);
+  const totpValid = verifyTotpCode(decryptTotpSecret(user.totpSecretEncrypted), parsed.data.code);
+  const recoveryValid = totpValid ? false : await consumeRecoveryCode(user.id, parsed.data.code);
+
+  if (!passwordValid || (!totpValid && !recoveryValid)) {
+    redirect(`${AUTH_ROUTES.home}?totp=invalid`);
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: {
+        totpEnabled: false,
+        totpSecretEncrypted: null,
+        totpPendingSecretEncrypted: null,
+      },
+    }),
+    prisma.totpRecoveryCode.deleteMany({
+      where: { userId: user.id },
+    }),
+    prisma.loginTotpChallenge.deleteMany({
+      where: { userId: user.id },
+    }),
+  ]);
+
+  redirect(`${AUTH_ROUTES.home}?totp=disabled`);
 }
 
 export async function inviteUserAction(formData: FormData) {
@@ -513,6 +716,9 @@ export async function updateUserActiveAction(formData: FormData) {
         data: { revokedAt: new Date() },
       }),
       prisma.loginEmailChallenge.deleteMany({
+        where: { userId },
+      }),
+      prisma.loginTotpChallenge.deleteMany({
         where: { userId },
       }),
     ]);

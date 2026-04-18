@@ -9,6 +9,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - local-account sign-in
 - password setup links
 - optional email-code MFA
+- optional authenticator-app TOTP MFA with recovery codes
 - Resend-backed MFA email delivery
 - shared sessions
 - shared locale, theme, and accent preference values
@@ -22,7 +23,12 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - the first real admin should be created deliberately during deploy bootstrap
 - the self-seed admin button is now bootstrap-only and should appear only when there are zero active MiniAuth admins
 - MFA email delivery is now wired through Resend when configured; development can still fall back to the on-page preview code flow
+- MiniAuth now also supports authenticator-app TOTP MFA with recovery codes, intended especially for admin accounts that do not want mailbox-based MFA dependency or resend-cost exposure
+- TOTP enrollment requires the current password at both setup start and confirmation time, so a stolen live session alone is not enough to bind a new authenticator device
+- successful TOTP enablement currently turns off email MFA for that account, so TOTP becomes the primary second factor there
+- recovery codes are hashed in the database, shown only in the immediate post-enable flow, and then cleared from the temporary display cookie after explicit acknowledgment
 - invite/password-setup email now also uses the Resend mail path when configured, and invite or resend redirects no longer expose raw password-setup tokens in dashboard URLs; send failure now returns as status only so resend is the recovery path
+- password-setup links now land on a claim handoff that exchanges the emailed token into an HttpOnly cookie before rendering the setup form, so the raw token no longer remains in the visible form URL after arrival
 - admins can now resend a fresh password-setup invite from the dashboard for accounts that still have not set a password
 - existing users can now have email MFA enabled or disabled directly from the MiniAuth admin dashboard without reusing the invite path
 - existing users can now also be enabled or disabled directly from the MiniAuth admin dashboard, and disabling a user revokes active MiniAuth sessions so downstream apps see the account as inactive immediately
@@ -38,6 +44,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - trusted post-login return origins should be declared explicitly through `ALLOWED_RETURN_TO_ORIGINS`; do not treat arbitrary redirect targets as valid
 - MiniAuth now also exposes a shared logout route so first-party apps can sign users out of the central session and then return them to the calling app's login screen
 - shared logout now uses a GET handoff page plus POST destroy flow, so passive cross-site GET requests no longer revoke the shared session directly
+- production TOTP requires `AUTH_TOTP_ENCRYPTION_KEY` in the server-local env; treat that as restore-critical secret material alongside mail and cookie configuration
 - the auth pages and admin dashboard now follow a calmer, more restrained presentation pass rather than the original scaffold styling
 - the primary sign-in page now intentionally mirrors the MiniTickets login structure and spacing so the shared-login experience feels consistent across apps, while keeping the MiniAuth Chinese and English product name
 - the sign-in page now again surfaces important login feedback states such as invalid credentials, inactive account, send failure, rate limiting, and password-setup success without expanding the page back into a cluttered layout

@@ -125,14 +125,43 @@ export async function createLoginChallenge(userId: string) {
   return { code, expiresAt };
 }
 
+export async function createTotpLoginChallenge(userId: string) {
+  const rawToken = generateToken();
+  const expiresAt = new Date(Date.now() + env.loginCodeMinutes * 60 * 1000);
+
+  await prisma.loginTotpChallenge.deleteMany({
+    where: { userId },
+  });
+
+  await prisma.loginTotpChallenge.create({
+    data: {
+      userId,
+      tokenHash: sha256(rawToken),
+      expiresAt,
+    },
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.set(env.loginChallengeCookieName, rawToken, getCookieOptions(expiresAt));
+  cookieStore.delete(env.loginPreviewCookieName);
+
+  return { expiresAt };
+}
+
 export async function clearLoginChallenge() {
   const cookieStore = await cookies();
   const rawToken = cookieStore.get(env.loginChallengeCookieName)?.value;
 
   if (rawToken) {
-    await prisma.loginEmailChallenge.deleteMany({
-      where: { tokenHash: sha256(rawToken) },
-    });
+    const tokenHash = sha256(rawToken);
+    await prisma.$transaction([
+      prisma.loginEmailChallenge.deleteMany({
+        where: { tokenHash },
+      }),
+      prisma.loginTotpChallenge.deleteMany({
+        where: { tokenHash },
+      }),
+    ]);
   }
 
   cookieStore.delete(env.loginChallengeCookieName);
@@ -147,16 +176,32 @@ export const getPendingLoginChallenge = cache(async () => {
     return null;
   }
 
-  const challenge = await prisma.loginEmailChallenge.findUnique({
-    where: { tokenHash: sha256(rawToken) },
+  const tokenHash = sha256(rawToken);
+  const emailChallenge = await prisma.loginEmailChallenge.findUnique({
+    where: { tokenHash },
     include: { user: true },
   });
 
-  if (!challenge || challenge.usedAt || challenge.expiresAt < new Date() || !challenge.user.isActive) {
+  if (emailChallenge && !emailChallenge.usedAt && emailChallenge.expiresAt >= new Date() && emailChallenge.user.isActive) {
+    return {
+      ...emailChallenge,
+      kind: "email" as const,
+    };
+  }
+
+  const totpChallenge = await prisma.loginTotpChallenge.findUnique({
+    where: { tokenHash },
+    include: { user: true },
+  });
+
+  if (!totpChallenge || totpChallenge.usedAt || totpChallenge.expiresAt < new Date() || !totpChallenge.user.isActive) {
     return null;
   }
 
-  return challenge;
+  return {
+    ...totpChallenge,
+    kind: "totp" as const,
+  };
 });
 
 export const getCurrentUser = cache(async () => {
