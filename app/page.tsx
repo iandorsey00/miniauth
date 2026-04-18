@@ -19,7 +19,6 @@ import {
 import { requireUser } from "@/lib/auth";
 import { AUTH_ROUTES } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
-import { buildSetupLink } from "@/lib/links";
 import { prisma } from "@/lib/prisma";
 
 const localeValues = ["EN", "ZH_CN"] as const;
@@ -83,7 +82,6 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{
     invite?: string;
-    setupToken?: string;
     seed?: string;
     mfa?: string;
     account?: string;
@@ -234,7 +232,6 @@ export default async function HomePage({
     }),
   ]);
 
-  const inviteLink = params.invite === "ok" && params.setupToken ? buildSetupLink(params.setupToken) : null;
   const activeUsers = users.filter((account) => account.isActive).length;
   const mfaUsers = users.filter((account) => account.emailMfaEnabled).length;
   const grantedApps = new Set(users.flatMap((account) => account.appAccess.map((access) => access.appKey))).size;
@@ -276,18 +273,12 @@ export default async function HomePage({
         </div>
       </section>
 
-      {inviteLink ? (
-        <section className="panel message-panel success-panel">
-          <div className="stack">
-            <strong>{dictionary.common.inviteLink}</strong>
-            <code>{inviteLink}</code>
-            <p>{dictionary.common.setupLinkHint}</p>
-          </div>
-        </section>
-      ) : null}
-
       {params.invite === "sent" ? (
         <section className="panel message-panel success-panel">{dictionary.auth.inviteSent}</section>
+      ) : null}
+
+      {params.invite === "send_failed" ? (
+        <section className="panel message-panel error-note">{dictionary.auth.inviteSendFailed}</section>
       ) : null}
 
       {params.seed === "1" ? (

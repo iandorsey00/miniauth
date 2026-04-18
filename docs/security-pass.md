@@ -28,6 +28,7 @@ Scope reviewed:
 Changes made during the pass:
 
 - removed MFA code leakage through redirect query parameters
+- removed password-setup token leakage through invite and resend redirect query parameters so the MiniAuth dashboard no longer rebuilds setup links from URL state
 - limited invite and session-revocation actions to MiniAuth admins
 - limited existing-user MFA toggles to MiniAuth admins
 - limited existing-user enable/disable control to MiniAuth admins and revoked active shared sessions on disable so inactive accounts cannot continue through stale MiniAuth sessions
@@ -35,6 +36,7 @@ Changes made during the pass:
 - limited the self-seed admin path to the true bootstrap case only, so once any active MiniAuth admin exists, ordinary invited users can no longer grant themselves admin access
 - limited cross-app post-login redirects to MiniAuth-relative paths, MiniAuth itself, or explicitly allowlisted trusted origins
 - kept shared logout redirects on the same validated return-target path so sign-out does not introduce a separate open-redirect surface
+- changed shared logout so GET no longer revokes the session; a POST is now required for real logout, with the same validated return-target behavior preserved after the POST completes
 - limited the new non-admin preferences surface to shared locale, theme, and accent updates only, with no user-management or app-access mutation capability exposed outside MiniAuth admins
 - kept shared workspace ownership limited to workspace identity and membership truth rather than moving downstream app authorization into MiniAuth
 - kept the one-off MiniTickets workspace import tool fail-closed by aborting on unresolved membership-user mappings instead of silently skipping or creating ambiguous membership records
@@ -47,7 +49,6 @@ Changes made during the pass:
 Open follow-ups:
 
 - add a real email delivery provider before production MFA or invite use
-- consider CSRF hardening beyond framework defaults if cross-site auth entry points expand
 - consider audit logging for admin auth actions
 - consider a dedicated signed identity handoff endpoint for MiniTickets integration if shared cookies are not practical
 - consider a dedicated shared-preferences update surface so apps do not need to mutate parent-domain cookies independently

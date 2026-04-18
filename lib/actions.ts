@@ -363,7 +363,7 @@ export async function inviteUserAction(formData: FormData) {
   });
 
   const token = await createPasswordSetupToken(user.id);
-  let inviteMode: "sent" | "ok" = "ok";
+  let inviteMode: "sent" | "send_failed" = "send_failed";
 
   try {
     const sent = await sendPasswordSetupEmail({
@@ -382,9 +382,7 @@ export async function inviteUserAction(formData: FormData) {
     console.error("Failed to send password setup email", error);
   }
 
-  redirect(
-    `${AUTH_ROUTES.home}?invite=${inviteMode}&email=${encodeURIComponent(user.email)}&setupToken=${encodeURIComponent(token.rawToken)}&by=${encodeURIComponent(currentUser.email)}`,
-  );
+  redirect(`${AUTH_ROUTES.home}?invite=${inviteMode}&email=${encodeURIComponent(user.email)}&by=${encodeURIComponent(currentUser.email)}`);
 }
 
 export async function upsertUserAppAccessAction(formData: FormData) {
@@ -439,7 +437,7 @@ export async function resendInviteAction(formData: FormData) {
   }
 
   const token = await createPasswordSetupToken(user.id);
-  let inviteMode: "sent" | "ok" = "ok";
+  let inviteMode: "sent" | "send_failed" = "send_failed";
 
   try {
     const sent = await sendPasswordSetupEmail({
@@ -458,9 +456,7 @@ export async function resendInviteAction(formData: FormData) {
     console.error("Failed to resend password setup email", error);
   }
 
-  redirect(
-    `${AUTH_ROUTES.home}?invite=${inviteMode}&email=${encodeURIComponent(user.email)}&setupToken=${encodeURIComponent(token.rawToken)}&by=${encodeURIComponent(currentUser.email)}`,
-  );
+  redirect(`${AUTH_ROUTES.home}?invite=${inviteMode}&email=${encodeURIComponent(user.email)}&by=${encodeURIComponent(currentUser.email)}`);
 }
 
 export async function revokeSessionAction(formData: FormData) {

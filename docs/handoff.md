@@ -22,7 +22,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - the first real admin should be created deliberately during deploy bootstrap
 - the self-seed admin button is now bootstrap-only and should appear only when there are zero active MiniAuth admins
 - MFA email delivery is now wired through Resend when configured; development can still fall back to the on-page preview code flow
-- invite/password-setup email now also uses the Resend mail path when configured, while keeping the manual setup-link fallback if delivery is unavailable
+- invite/password-setup email now also uses the Resend mail path when configured, and invite or resend redirects no longer expose raw password-setup tokens in dashboard URLs; send failure now returns as status only so resend is the recovery path
 - admins can now resend a fresh password-setup invite from the dashboard for accounts that still have not set a password
 - existing users can now have email MFA enabled or disabled directly from the MiniAuth admin dashboard without reusing the invite path
 - existing users can now also be enabled or disabled directly from the MiniAuth admin dashboard, and disabling a user revokes active MiniAuth sessions so downstream apps see the account as inactive immediately
@@ -37,6 +37,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - MiniAuth now accepts a validated `returnTo` URL on login and MFA verification so trusted first-party apps can hand users back to their own post-login route instead of always landing on the MiniAuth dashboard
 - trusted post-login return origins should be declared explicitly through `ALLOWED_RETURN_TO_ORIGINS`; do not treat arbitrary redirect targets as valid
 - MiniAuth now also exposes a shared logout route so first-party apps can sign users out of the central session and then return them to the calling app's login screen
+- shared logout now uses a GET handoff page plus POST destroy flow, so passive cross-site GET requests no longer revoke the shared session directly
 - the auth pages and admin dashboard now follow a calmer, more restrained presentation pass rather than the original scaffold styling
 - the primary sign-in page now intentionally mirrors the MiniTickets login structure and spacing so the shared-login experience feels consistent across apps, while keeping the MiniAuth Chinese and English product name
 - the sign-in page now again surfaces important login feedback states such as invalid credentials, inactive account, send failure, rate limiting, and password-setup success without expanding the page back into a cluttered layout
