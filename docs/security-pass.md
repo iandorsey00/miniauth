@@ -79,3 +79,4 @@ Visual refresh note:
 - aligning the MFA verification card with the login-page composition remains presentation-only and does not affect verification logic, resend handling, or credential validation
 - removing the retired `miniassets` example text from the app-access UI is a copy-only cleanup and does not affect grant semantics or authorization behavior
 - the TOTP setup QR code is generated locally inside MiniAuth and does not send the provisioning URI or shared secret to any third-party QR service
+- the account-surface reorganization and Safari spacing cleanup remain presentation-only; they do not change session handling, auth state, permission checks, or data exposure

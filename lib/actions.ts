@@ -390,7 +390,7 @@ export async function updateSelfPreferencesAction(formData: FormData) {
 export async function beginTotpSetupAction(formData: FormData) {
   const user = await requireUser();
   const parsed = beginTotpSchema.safeParse({
-    password: formData.get("password"),
+    password: formData.get("currentPassword") ?? formData.get("password"),
   });
 
   if (!parsed.success || !user.passwordHash) {
@@ -424,7 +424,7 @@ export async function beginTotpSetupAction(formData: FormData) {
 export async function confirmTotpSetupAction(formData: FormData) {
   const user = await requireUser();
   const parsed = confirmTotpSchema.safeParse({
-    password: formData.get("password"),
+    password: formData.get("currentPassword") ?? formData.get("password"),
     code: formData.get("code"),
   });
 
@@ -491,7 +491,7 @@ export async function confirmTotpSetupAction(formData: FormData) {
 export async function disableTotpAction(formData: FormData) {
   const user = await requireUser();
   const parsed = disableTotpSchema.safeParse({
-    password: formData.get("password"),
+    password: formData.get("currentPassword") ?? formData.get("password"),
     code: formData.get("code"),
   });
 
