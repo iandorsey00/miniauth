@@ -56,6 +56,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - MiniAuth now also exposes a shared logout route so downstream apps can clear the shared MiniAuth session and send users back to their own sign-in screen in one step.
 - MiniAuth shared logout now requires a POST to revoke the session; `GET /logout` only renders a tiny first-party handoff page so passive cross-site requests do not trigger logout.
 - TOTP enrollment now requires the current password, and newly generated recovery codes are displayed only through a dedicated one-time signed recovery route with a first-party handoff check.
+- TOTP enrollment now shows a locally generated QR code for authenticator apps, while still keeping the raw secret and provisioning URI available as fallback for manual entry.
 - Email verification code resend now has a cooldown, so repeated clicks do not keep issuing fresh codes immediately.
 - The app serves `robots.txt` with a full-site disallow policy.
 - Deployment and migration docs live in `docs/`:

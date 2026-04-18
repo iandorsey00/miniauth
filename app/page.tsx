@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import QRCode from "qrcode";
 
 import {
   beginTotpSetupAction,
@@ -81,7 +83,7 @@ function BrandHeader({
   );
 }
 
-function getTotpSetupDetails({
+async function getTotpSetupDetails({
   appName,
   email,
   pendingSecret,
@@ -94,12 +96,23 @@ function getTotpSetupDetails({
     return null;
   }
 
+  const provisioningUri = buildTotpProvisioningUri({
+    issuer: appName,
+    accountName: email,
+    secret: pendingSecret,
+  });
+
   return {
     secret: pendingSecret,
-    provisioningUri: buildTotpProvisioningUri({
-      issuer: appName,
-      accountName: email,
-      secret: pendingSecret,
+    provisioningUri,
+    qrCodeDataUrl: await QRCode.toDataURL(provisioningUri, {
+      errorCorrectionLevel: "M",
+      margin: 1,
+      width: 224,
+      color: {
+        dark: "#0b1220",
+        light: "#ffffff",
+      },
     }),
   };
 }
@@ -132,7 +145,7 @@ export default async function HomePage({
         },
       })
     : 0;
-  const totpSetupDetails = getTotpSetupDetails({
+  const totpSetupDetails = await getTotpSetupDetails({
     appName: dictionary.appName,
     email: user.email,
     pendingSecret: pendingTotpSecret,
@@ -230,6 +243,17 @@ export default async function HomePage({
               </div>
               {totpSetupDetails ? (
                 <div className="stack">
+                  <p>{dictionary.auth.totpSetupHint}</p>
+                  <div className="totp-qr-card">
+                    <Image
+                      alt={dictionary.auth.totpQrAlt}
+                      className="totp-qr-image"
+                      height={224}
+                      unoptimized
+                      src={totpSetupDetails.qrCodeDataUrl}
+                      width={224}
+                    />
+                  </div>
                   <p className="code-block">{totpSetupDetails.secret}</p>
                   <p className="code-block">{totpSetupDetails.provisioningUri}</p>
                   <form className="inline-form" action={confirmTotpSetupAction}>
@@ -466,6 +490,16 @@ export default async function HomePage({
           {totpSetupDetails ? (
             <div className="stack">
               <p>{dictionary.auth.totpSetupHint}</p>
+              <div className="totp-qr-card">
+                <Image
+                  alt={dictionary.auth.totpQrAlt}
+                  className="totp-qr-image"
+                  height={224}
+                  unoptimized
+                  src={totpSetupDetails.qrCodeDataUrl}
+                  width={224}
+                />
+              </div>
               <div className="code-block">{totpSetupDetails.secret}</div>
               <div className="code-block">{totpSetupDetails.provisioningUri}</div>
               <form className="inline-form" action={confirmTotpSetupAction}>

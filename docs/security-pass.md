@@ -42,6 +42,7 @@ Changes made during the pass:
 - added authenticator-app TOTP MFA with encrypted secret storage and one-time hashed recovery codes
 - made TOTP the preferred second factor when enabled on an account, so MiniAuth no longer depends on mailbox delivery for that user’s MFA step
 - required current-password confirmation before starting or confirming TOTP enrollment, so a stolen live session cannot silently bind a new authenticator device on its own
+- moved TOTP enrollment UX to a locally generated QR-code handoff so authenticator setup no longer depends on copying the raw provisioning URI into another app, while keeping manual-entry fallback available
 - limited recovery-code display to a dedicated one-time signed recovery route, backed by a first-party handoff cookie and live-session check, so the codes no longer reappear on normal signed-in page loads or render on unauthenticated GET requests
 - limited the new non-admin preferences surface to shared locale, theme, and accent updates only, with no user-management or app-access mutation capability exposed outside MiniAuth admins
 - kept shared workspace ownership limited to workspace identity and membership truth rather than moving downstream app authorization into MiniAuth
@@ -77,3 +78,4 @@ Visual refresh note:
 - restoring the older centered login-card composition remains presentation-only and does not affect authentication, redirect handling, or credential validation
 - aligning the MFA verification card with the login-page composition remains presentation-only and does not affect verification logic, resend handling, or credential validation
 - removing the retired `miniassets` example text from the app-access UI is a copy-only cleanup and does not affect grant semantics or authorization behavior
+- the TOTP setup QR code is generated locally inside MiniAuth and does not send the provisioning URI or shared secret to any third-party QR service
