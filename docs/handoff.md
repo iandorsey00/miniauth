@@ -29,13 +29,16 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - TOTP setup now shows a locally generated QR code for authenticator apps, while still keeping the raw secret and provisioning URI visible as fallback for manual entry
 - the TOTP setup code blocks now wrap long provisioning URIs cleanly instead of stretching the preferences or dashboard panels
 - recovery codes are hashed in the database and shown only through a dedicated one-time recovery route immediately after TOTP enablement; that route now requires both a live signed-in MiniAuth session and a first-party handoff cookie before it renders
-- email verification code resend is now gated by a cooldown so repeated clicks do not keep issuing fresh codes immediately
+- email verification code send and resend are now gated so repeated correct-password attempts or repeated resend clicks do not keep issuing fresh codes immediately
 - invite/password-setup email now also uses the Resend mail path when configured, and invite or resend redirects no longer expose raw password-setup tokens in dashboard URLs; send failure now returns as status only so resend is the recovery path
-- password-setup links now land on a claim handoff that exchanges the emailed token into an HttpOnly cookie before rendering the setup form, so the raw token no longer remains in the visible form URL after arrival
+- password-setup links now land on a claim handoff that validates the token and exchanges it into an HttpOnly cookie before rendering the setup form, so the raw token no longer remains in the visible form URL after arrival
+- password-setup tokens are only minted or accepted for accounts that do not yet have passwords; existing users should receive app access through the existing-user grant UI instead of a fresh invite token
 - admins can now resend a fresh password-setup invite from the dashboard for accounts that still have not set a password
 - existing users can now have email MFA enabled or disabled directly from the MiniAuth admin dashboard without reusing the invite path
 - existing users can now also be enabled or disabled directly from the MiniAuth admin dashboard, and disabling a user revokes active MiniAuth sessions so downstream apps see the account as inactive immediately
 - existing users can now also have app access grants added or updated directly from the MiniAuth admin dashboard, including per-app `role` and `state`, so admins do not need to reuse the invite form to grant a new downstream app
+- MiniAuth now prevents the admin UI from disabling, deactivating, or demoting the final active MiniAuth admin; create another active admin first if the last one must be retired
+- authenticated server actions now require MiniAuth same-origin requests, which narrows the CSRF surface for parent-domain cookie deployments and same-site subdomains
 - MiniAuth now stores shared `locale`, `themePreference`, and `accentColor` values and writes neutral shared cookies for compatible apps on the same parent domain
 - MiniAuth now reads those shared values back into root `data-theme` and `data-accent` attributes so its rendering model stays compatible with MiniTickets
 - signed-in non-admin users now land on a lightweight MiniAuth account-preferences surface where they can update shared locale, theme, and accent values without seeing admin-only controls
@@ -45,6 +48,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - the workspace import script maps memberships by `authUserId` first and email second, and it fails closed if any membership cannot be resolved to a MiniAuth user
 - MiniAuth now accepts a validated `returnTo` URL on login and MFA verification so trusted first-party apps can hand users back to their own post-login route instead of always landing on the MiniAuth dashboard
 - trusted post-login return origins should be declared explicitly through `ALLOWED_RETURN_TO_ORIGINS`; do not treat arbitrary redirect targets as valid
+- relative `returnTo` targets are normalized and reject protocol-relative or backslash variants before redirecting
 - MiniAuth now also exposes a shared logout route so first-party apps can sign users out of the central session and then return them to the calling app's login screen
 - shared logout now uses a GET handoff page plus POST destroy flow, so passive cross-site GET requests no longer revoke the shared session directly
 - production TOTP requires `AUTH_TOTP_ENCRYPTION_KEY` in the server-local env; treat that as restore-critical secret material alongside mail and cookie configuration

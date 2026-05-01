@@ -1,6 +1,6 @@
 # Security Pass
 
-Date: 2026-04-04
+Date: 2026-04-30
 
 Scope reviewed:
 
@@ -19,10 +19,14 @@ Scope reviewed:
 - admin-only account enable/disable control for existing users
 - admin-only app-access grant management for existing users
 - bootstrap-only self-seed admin path
+- same-origin enforcement for server actions
 - trusted cross-app post-login redirects
 - trusted cross-app logout redirects
+- password-setup claim validation and setup-token cookie cleanup
+- email MFA send throttling
 - non-admin shared-preferences update surface
 - shared workspace and membership truth
+- dependency advisory state
 - one-off MiniTickets workspace import tooling
 - deployment and secret-handling defaults
 
@@ -35,8 +39,11 @@ Changes made during the pass:
 - limited existing-user MFA toggles to MiniAuth admins
 - limited existing-user enable/disable control to MiniAuth admins and revoked active shared sessions on disable so inactive accounts cannot continue through stale MiniAuth sessions
 - limited existing-user app-access grant changes to MiniAuth admins, with normalized lowercase `appKey` handling and upsert behavior so app entry can be disabled cleanly by moving a grant to `INACTIVE` instead of forcing a user deletion or reinvite flow
+- added a same-origin guard to server actions so authenticated mutations reject cross-origin form posts, including same-site subdomain posts that could otherwise carry parent-domain cookies
+- added a guard against disabling, deactivating, or demoting the final active MiniAuth admin through the admin UI
 - limited the self-seed admin path to the true bootstrap case only, so once any active MiniAuth admin exists, ordinary invited users can no longer grant themselves admin access
 - limited cross-app post-login redirects to MiniAuth-relative paths, MiniAuth itself, or explicitly allowlisted trusted origins
+- tightened relative `returnTo` validation so slash-backslash variants and protocol-relative edge cases are not accepted as post-login or post-logout targets
 - kept shared logout redirects on the same validated return-target path so sign-out does not introduce a separate open-redirect surface
 - changed shared logout so GET no longer revokes the session; a POST is now required for real logout, with the same validated return-target behavior preserved after the POST completes
 - added authenticator-app TOTP MFA with encrypted secret storage and one-time hashed recovery codes
@@ -51,13 +58,17 @@ Changes made during the pass:
 - kept cookie-driven root rendering limited to theme, accent, and locale presentation concerns rather than access control decisions
 - added send, resend, and verify rate-limited MFA handling with explicit send-failure cleanup
 - added an email verification resend cooldown so repeated clicks do not keep issuing fresh codes immediately
+- applied the email MFA send limiter to the initial post-password MFA send as well as the resend path, so a correct password cannot be used to repeatedly issue fresh email codes without hitting the send cap
 - reordered TOTP disable validation so a valid recovery code is not consumed when the submitted password is wrong
+- validated password-setup tokens before storing them in the HttpOnly setup cookie, and stopped setup tokens from being minted or accepted for accounts that already have passwords
+- cleared auth and shared-preference cookies with the same path and shared-domain attributes used when setting them, so logout and session cleanup behave correctly in parent-domain cookie deployments
+- bumped audited dependencies and added narrow transitive overrides for patched `postcss` and `@hono/node-server` versions; `npm audit --audit-level=moderate` now reports zero vulnerabilities
 - kept deploy documentation placeholder-based so no private host or secret detail is committed
 - kept production secrets and deploy env values out of the repo
 
 Open follow-ups:
 
-- add a real email delivery provider before production MFA or invite use
+- keep the Resend sender domain, API key, and mail failure monitoring in the private operational runbook
 - consider audit logging for admin auth actions
 - consider replacing the temporary recovery-code cookie display step later with a dedicated one-time download or print flow if operator UX needs to become more polished
 - consider a dedicated signed identity handoff endpoint for MiniTickets integration if shared cookies are not practical

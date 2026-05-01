@@ -118,6 +118,21 @@ async function getClientIp() {
   return headerStore.get("x-real-ip") || "unknown";
 }
 
+async function assertSameOriginAction() {
+  const headerStore = await headers();
+  const origin = headerStore.get("origin");
+  const fetchSite = headerStore.get("sec-fetch-site");
+  const allowedOrigin = new URL(env.baseUrl).origin;
+
+  if (origin && origin !== allowedOrigin) {
+    throw new Error("INVALID_ACTION_ORIGIN");
+  }
+
+  if (!origin && fetchSite && !["same-origin", "none"].includes(fetchSite)) {
+    throw new Error("INVALID_ACTION_ORIGIN");
+  }
+}
+
 async function consumeRecoveryCode(userId: string, code: string) {
   const normalized = normalizeRecoveryCode(code);
   if (normalized.length !== 8) {
@@ -139,7 +154,43 @@ async function consumeRecoveryCode(userId: string, code: string) {
   return result.count > 0;
 }
 
+async function hasActiveMiniauthAdminAccess(userId: string) {
+  const access = await prisma.appAccess.findUnique({
+    where: {
+      userId_appKey: {
+        userId,
+        appKey: "miniauth",
+      },
+    },
+    select: {
+      role: true,
+      state: true,
+    },
+  });
+
+  return access?.role === "ADMIN" && access.state === "ACTIVE";
+}
+
+async function hasAnotherActiveMiniauthAdmin(userId: string) {
+  const count = await prisma.appAccess.count({
+    where: {
+      appKey: "miniauth",
+      role: "ADMIN",
+      state: "ACTIVE",
+      userId: {
+        not: userId,
+      },
+      user: {
+        isActive: true,
+      },
+    },
+  });
+
+  return count > 0;
+}
+
 export async function loginAction(formData: FormData) {
+  await assertSameOriginAction();
   const returnTo = getValidatedReturnTo(formData.get("returnTo"));
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
@@ -186,6 +237,7 @@ export async function loginAction(formData: FormData) {
 
   if (user.emailMfaEnabled) {
     try {
+      await assertRateLimit("login_mfa_send", `${user.id}|${clientIp}`, 3);
       const challenge = await createLoginChallenge(user.id);
       await sendLoginCodeEmail({
         recipient: {
@@ -215,6 +267,7 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function verifyLoginCodeAction(formData: FormData) {
+  await assertSameOriginAction();
   const returnTo = getValidatedReturnTo(formData.get("returnTo"));
   const parsed = verifyLoginSchema.safeParse({
     code: formData.get("code"),
@@ -269,6 +322,7 @@ export async function verifyLoginCodeAction(formData: FormData) {
 }
 
 export async function resendLoginCodeAction(formData: FormData) {
+  await assertSameOriginAction();
   const returnTo = getValidatedReturnTo(formData.get("returnTo"));
   const challenge = await getPendingLoginChallenge();
 
@@ -307,8 +361,9 @@ export async function resendLoginCodeAction(formData: FormData) {
 }
 
 export async function setupPasswordAction(formData: FormData) {
+  await assertSameOriginAction();
   const cookieStore = await cookies();
-  const rawToken = cookieStore.get(process.env.AUTH_PASSWORD_SETUP_COOKIE_NAME || "miniauth_password_setup")?.value ?? "";
+  const rawToken = cookieStore.get(env.passwordSetupCookieName)?.value ?? "";
   const parsed = setupPasswordSchema.safeParse({
     password: formData.get("password"),
     passwordConfirm: formData.get("passwordConfirm"),
@@ -329,8 +384,17 @@ export async function setupPasswordAction(formData: FormData) {
     include: { user: true },
   });
 
-  if (!setupToken || setupToken.usedAt || setupToken.expiresAt < new Date() || !setupToken.user.isActive) {
-    cookieStore.delete(process.env.AUTH_PASSWORD_SETUP_COOKIE_NAME || "miniauth_password_setup");
+  if (
+    !setupToken ||
+    setupToken.usedAt ||
+    setupToken.expiresAt < new Date() ||
+    !setupToken.user.isActive ||
+    setupToken.user.passwordHash
+  ) {
+    cookieStore.set(env.passwordSetupCookieName, "", {
+      expires: new Date(0),
+      path: AUTH_ROUTES.setupPassword,
+    });
     redirect(`${AUTH_ROUTES.setupPassword}?error=expired`);
   }
 
@@ -347,17 +411,22 @@ export async function setupPasswordAction(formData: FormData) {
     }),
   ]);
 
-  cookieStore.delete(process.env.AUTH_PASSWORD_SETUP_COOKIE_NAME || "miniauth_password_setup");
+  cookieStore.set(env.passwordSetupCookieName, "", {
+    expires: new Date(0),
+    path: AUTH_ROUTES.setupPassword,
+  });
 
   redirect(`${AUTH_ROUTES.login}?setup=1`);
 }
 
 export async function logoutAction() {
+  await assertSameOriginAction();
   await destroySession();
   redirect(AUTH_ROUTES.login);
 }
 
 export async function updateSelfPreferencesAction(formData: FormData) {
+  await assertSameOriginAction();
   const user = await requireUser();
   const parsed = selfPreferencesSchema.safeParse({
     locale: formData.get("locale"),
@@ -388,6 +457,7 @@ export async function updateSelfPreferencesAction(formData: FormData) {
 }
 
 export async function beginTotpSetupAction(formData: FormData) {
+  await assertSameOriginAction();
   const user = await requireUser();
   const parsed = beginTotpSchema.safeParse({
     password: formData.get("currentPassword") ?? formData.get("password"),
@@ -422,6 +492,7 @@ export async function beginTotpSetupAction(formData: FormData) {
 }
 
 export async function confirmTotpSetupAction(formData: FormData) {
+  await assertSameOriginAction();
   const user = await requireUser();
   const parsed = confirmTotpSchema.safeParse({
     password: formData.get("currentPassword") ?? formData.get("password"),
@@ -489,6 +560,7 @@ export async function confirmTotpSetupAction(formData: FormData) {
 }
 
 export async function disableTotpAction(formData: FormData) {
+  await assertSameOriginAction();
   const user = await requireUser();
   const parsed = disableTotpSchema.safeParse({
     password: formData.get("currentPassword") ?? formData.get("password"),
@@ -540,6 +612,7 @@ export async function disableTotpAction(formData: FormData) {
 }
 
 export async function inviteUserAction(formData: FormData) {
+  await assertSameOriginAction();
   const currentUser = await requireAdmin();
   const parsed = inviteSchema.safeParse({
     email: formData.get("email"),
@@ -596,6 +669,10 @@ export async function inviteUserAction(formData: FormData) {
     },
   });
 
+  if (user.passwordHash) {
+    redirect(`${AUTH_ROUTES.home}?access=updated`);
+  }
+
   const token = await createPasswordSetupToken(user.id);
   let inviteMode: "sent" | "send_failed" = "send_failed";
 
@@ -620,6 +697,7 @@ export async function inviteUserAction(formData: FormData) {
 }
 
 export async function upsertUserAppAccessAction(formData: FormData) {
+  await assertSameOriginAction();
   await requireAdmin();
   const parsed = appAccessSchema.safeParse({
     userId: formData.get("userId"),
@@ -629,6 +707,16 @@ export async function upsertUserAppAccessAction(formData: FormData) {
   });
 
   if (!parsed.success) {
+    redirect(`${AUTH_ROUTES.home}?access=invalid`);
+  }
+
+  const removesLastMiniauthAdmin =
+    parsed.data.appKey === "miniauth" &&
+    (parsed.data.role !== "ADMIN" || parsed.data.state !== "ACTIVE") &&
+    (await hasActiveMiniauthAdminAccess(parsed.data.userId)) &&
+    !(await hasAnotherActiveMiniauthAdmin(parsed.data.userId));
+
+  if (removesLastMiniauthAdmin) {
     redirect(`${AUTH_ROUTES.home}?access=invalid`);
   }
 
@@ -655,6 +743,7 @@ export async function upsertUserAppAccessAction(formData: FormData) {
 }
 
 export async function resendInviteAction(formData: FormData) {
+  await assertSameOriginAction();
   const currentUser = await requireAdmin();
   const userId = String(formData.get("userId") || "");
 
@@ -666,7 +755,7 @@ export async function resendInviteAction(formData: FormData) {
     where: { id: userId },
   });
 
-  if (!user || !user.isActive) {
+  if (!user || !user.isActive || user.passwordHash) {
     redirect(`${AUTH_ROUTES.home}?invite=invalid`);
   }
 
@@ -694,6 +783,7 @@ export async function resendInviteAction(formData: FormData) {
 }
 
 export async function revokeSessionAction(formData: FormData) {
+  await assertSameOriginAction();
   await requireAdmin();
   const id = String(formData.get("sessionId") || "");
 
@@ -710,6 +800,7 @@ export async function revokeSessionAction(formData: FormData) {
 }
 
 export async function updateUserMfaAction(formData: FormData) {
+  await assertSameOriginAction();
   await requireAdmin();
   const userId = String(formData.get("userId") || "");
   const enabled = String(formData.get("enabled") || "") === "1";
@@ -727,11 +818,16 @@ export async function updateUserMfaAction(formData: FormData) {
 }
 
 export async function updateUserActiveAction(formData: FormData) {
+  await assertSameOriginAction();
   await requireAdmin();
   const userId = String(formData.get("userId") || "");
   const enabled = String(formData.get("enabled") || "") === "1";
 
   if (!userId) {
+    redirect(`${AUTH_ROUTES.home}?account=invalid`);
+  }
+
+  if (!enabled && (await hasActiveMiniauthAdminAccess(userId)) && !(await hasAnotherActiveMiniauthAdmin(userId))) {
     redirect(`${AUTH_ROUTES.home}?account=invalid`);
   }
 
@@ -759,6 +855,7 @@ export async function updateUserActiveAction(formData: FormData) {
 }
 
 export async function createWorkspaceAction(formData: FormData) {
+  await assertSameOriginAction();
   await requireAdmin();
   const parsed = workspaceSchema.safeParse({
     name: formData.get("name"),
@@ -785,6 +882,7 @@ export async function createWorkspaceAction(formData: FormData) {
 }
 
 export async function updateWorkspaceAction(formData: FormData) {
+  await assertSameOriginAction();
   await requireAdmin();
   const workspaceId = String(formData.get("workspaceId") ?? "");
   const parsed = workspaceSchema.safeParse({
@@ -814,6 +912,7 @@ export async function updateWorkspaceAction(formData: FormData) {
 }
 
 export async function assignWorkspaceMembershipAction(formData: FormData) {
+  await assertSameOriginAction();
   await requireAdmin();
   const parsed = workspaceMembershipSchema.safeParse({
     userId: formData.get("userId"),
@@ -844,6 +943,7 @@ export async function assignWorkspaceMembershipAction(formData: FormData) {
 }
 
 export async function removeWorkspaceMembershipAction(formData: FormData) {
+  await assertSameOriginAction();
   await requireAdmin();
   const userId = String(formData.get("userId") ?? "");
   const workspaceId = String(formData.get("workspaceId") ?? "");
@@ -863,6 +963,7 @@ export async function removeWorkspaceMembershipAction(formData: FormData) {
 }
 
 export async function seedSelfAccessAction() {
+  await assertSameOriginAction();
   const user = await getCurrentUser();
   if (!user) {
     redirect(AUTH_ROUTES.login);

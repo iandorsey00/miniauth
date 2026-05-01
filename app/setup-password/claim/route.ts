@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 
 import { AUTH_ROUTES } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { hashPasswordSetupToken } from "@/lib/password-setup";
+import { prisma } from "@/lib/prisma";
 
 function getCookieOptions(expiresAt: Date) {
   return {
@@ -21,8 +23,34 @@ export async function GET(request: Request) {
     return Response.redirect(new URL(`${AUTH_ROUTES.setupPassword}?error=expired`, env.baseUrl), 307);
   }
 
+  const setupToken = await prisma.passwordSetupToken.findUnique({
+    where: {
+      tokenHash: hashPasswordSetupToken(token),
+    },
+    select: {
+      expiresAt: true,
+      usedAt: true,
+      user: {
+        select: {
+          isActive: true,
+          passwordHash: true,
+        },
+      },
+    },
+  });
+
+  if (
+    !setupToken ||
+    setupToken.usedAt ||
+    setupToken.expiresAt < new Date() ||
+    !setupToken.user.isActive ||
+    setupToken.user.passwordHash
+  ) {
+    return Response.redirect(new URL(`${AUTH_ROUTES.setupPassword}?error=expired`, env.baseUrl), 307);
+  }
+
   const cookieStore = await cookies();
-  const expiresAt = new Date(Date.now() + env.passwordSetupHours * 60 * 60 * 1000);
+  const expiresAt = setupToken.expiresAt;
   cookieStore.set(env.passwordSetupCookieName, token, getCookieOptions(expiresAt));
 
   return Response.redirect(new URL(AUTH_ROUTES.setupPassword, env.baseUrl), 307);

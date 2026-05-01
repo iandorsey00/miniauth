@@ -19,6 +19,14 @@ function getCookieOptions(expiresAt: Date) {
   };
 }
 
+async function clearCookie(name: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(name, "", {
+    ...getCookieOptions(new Date(0)),
+    maxAge: 0,
+  });
+}
+
 function toCookieValue(value: Locale | ThemePreference | AccentColor) {
   return value.toLowerCase();
 }
@@ -46,10 +54,9 @@ export async function refreshSharedPreferenceCookies(preferences: {
 }
 
 async function clearSharedPreferenceCookies() {
-  const cookieStore = await cookies();
-  cookieStore.delete(env.sharedLocaleCookieName);
-  cookieStore.delete(env.sharedThemeCookieName);
-  cookieStore.delete(env.sharedAccentCookieName);
+  await clearCookie(env.sharedLocaleCookieName);
+  await clearCookie(env.sharedThemeCookieName);
+  await clearCookie(env.sharedAccentCookieName);
 }
 
 export async function startSession(userId: string) {
@@ -94,7 +101,7 @@ export async function destroySession() {
     });
   }
 
-  cookieStore.delete(env.authCookieName);
+  await clearCookie(env.authCookieName);
   await clearSharedPreferenceCookies();
 }
 
@@ -143,7 +150,7 @@ export async function createTotpLoginChallenge(userId: string) {
 
   const cookieStore = await cookies();
   cookieStore.set(env.loginChallengeCookieName, rawToken, getCookieOptions(expiresAt));
-  cookieStore.delete(env.loginPreviewCookieName);
+  await clearCookie(env.loginPreviewCookieName);
 
   return { expiresAt };
 }
@@ -164,8 +171,8 @@ export async function clearLoginChallenge() {
     ]);
   }
 
-  cookieStore.delete(env.loginChallengeCookieName);
-  cookieStore.delete(env.loginPreviewCookieName);
+  await clearCookie(env.loginChallengeCookieName);
+  await clearCookie(env.loginPreviewCookieName);
 }
 
 export const getPendingLoginChallenge = cache(async () => {

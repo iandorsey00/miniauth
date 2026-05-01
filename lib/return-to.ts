@@ -17,15 +17,32 @@ export function getValidatedReturnTo(value: FormDataEntryValue | string | null |
   const trimmed = value.trim();
   const decoded = safeDecodeURIComponent(trimmed);
 
+  let baseUrl: URL;
+  try {
+    baseUrl = new URL(env.baseUrl);
+  } catch {
+    return null;
+  }
+
   if (decoded.startsWith("/")) {
-    return decoded.startsWith("//") ? null : decoded;
+    if (/^\/[\\/]/.test(decoded) || decoded.includes("\\")) {
+      return null;
+    }
+
+    try {
+      const relativeTarget = new URL(decoded, baseUrl);
+      if (relativeTarget.origin !== baseUrl.origin) {
+        return null;
+      }
+      return `${relativeTarget.pathname}${relativeTarget.search}${relativeTarget.hash}`;
+    } catch {
+      return null;
+    }
   }
 
   let candidate: URL;
-  let baseUrl: URL;
   try {
     candidate = new URL(decoded);
-    baseUrl = new URL(env.baseUrl);
   } catch {
     return null;
   }
