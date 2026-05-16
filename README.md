@@ -65,6 +65,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - Email verification code sends are also rate-limited on the initial post-password MFA path, so someone with a valid password cannot repeatedly trigger fresh email codes without hitting the send cap.
 - Server actions now enforce same-origin requests, password-setup claims validate tokens before setting cookies, existing-password accounts no longer receive setup tokens, and the admin UI prevents removal of the final active MiniAuth admin.
 - Runtime dependencies were refreshed and audited; `npm audit --audit-level=moderate` currently reports zero vulnerabilities.
+- The weekly 2026-05-16 security pass also tightened logout auto-submit so only true same-origin navigation can silently complete the GET-to-POST handoff; same-site sibling subdomains now require explicit user action on the handoff page.
 - The deploy script now mirrors the MiniTickets flow more closely, including restoring server-local `package-lock.json` drift before pull and retrying the final health check instead of failing on the first transient 502.
 - The app serves `robots.txt` with a full-site disallow policy.
 - Deployment and migration docs live in `docs/`:

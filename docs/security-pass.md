@@ -1,6 +1,6 @@
 # Security Pass
 
-Date: 2026-04-30
+Date: 2026-05-16
 
 Scope reviewed:
 
@@ -29,6 +29,7 @@ Scope reviewed:
 - dependency advisory state
 - one-off MiniTickets workspace import tooling
 - deployment and secret-handling defaults
+- weekly review of logout handoff behavior after the 2026-04-30 hardening pass
 
 Changes made during the pass:
 
@@ -46,6 +47,7 @@ Changes made during the pass:
 - tightened relative `returnTo` validation so slash-backslash variants and protocol-relative edge cases are not accepted as post-login or post-logout targets
 - kept shared logout redirects on the same validated return-target path so sign-out does not introduce a separate open-redirect surface
 - changed shared logout so GET no longer revokes the session; a POST is now required for real logout, with the same validated return-target behavior preserved after the POST completes
+- tightened the logout GET handoff again so only `same-origin` navigation auto-submits; same-site sibling subdomains now stop at the confirmation page instead of silently completing logout
 - added authenticator-app TOTP MFA with encrypted secret storage and one-time hashed recovery codes
 - made TOTP the preferred second factor when enabled on an account, so MiniAuth no longer depends on mailbox delivery for that user’s MFA step
 - required current-password confirmation before starting or confirming TOTP enrollment, so a stolen live session cannot silently bind a new authenticator device on its own
@@ -63,6 +65,7 @@ Changes made during the pass:
 - validated password-setup tokens before storing them in the HttpOnly setup cookie, and stopped setup tokens from being minted or accepted for accounts that already have passwords
 - cleared auth and shared-preference cookies with the same path and shared-domain attributes used when setting them, so logout and session cleanup behave correctly in parent-domain cookie deployments
 - bumped audited dependencies and added narrow transitive overrides for patched `postcss` and `@hono/node-server` versions; `npm audit --audit-level=moderate` now reports zero vulnerabilities
+- refreshed the lockfile during the 2026-05-16 weekly review so patched `next`, `fast-uri`, and `hono` artifacts are present in the installed tree and `npm audit --audit-level=moderate` still reports zero vulnerabilities
 - kept deploy documentation placeholder-based so no private host or secret detail is committed
 - kept production secrets and deploy env values out of the repo
 

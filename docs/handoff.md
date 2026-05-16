@@ -50,7 +50,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - trusted post-login return origins should be declared explicitly through `ALLOWED_RETURN_TO_ORIGINS`; do not treat arbitrary redirect targets as valid
 - relative `returnTo` targets are normalized and reject protocol-relative or backslash variants before redirecting
 - MiniAuth now also exposes a shared logout route so first-party apps can sign users out of the central session and then return them to the calling app's login screen
-- shared logout now uses a GET handoff page plus POST destroy flow, so passive cross-site GET requests no longer revoke the shared session directly
+- shared logout now uses a GET handoff page plus POST destroy flow, and silent auto-submit is limited to true same-origin navigation so same-site sibling subdomains cannot force a full logout without explicit user action
 - production TOTP requires `AUTH_TOTP_ENCRYPTION_KEY` in the server-local env; treat that as restore-critical secret material alongside mail and cookie configuration
 - the auth pages and admin dashboard now follow a calmer, more restrained presentation pass rather than the original scaffold styling
 - the primary sign-in page now intentionally mirrors the MiniTickets login structure and spacing so the shared-login experience feels consistent across apps, while keeping the MiniAuth Chinese and English product name
@@ -67,6 +67,7 @@ MiniAuth is a small shared login service for MiniTickets and related self-hosted
 - the app serves a site-wide `robots.txt` disallow so search engines are asked not to index MiniAuth
 - deployment docs intentionally use placeholders and examples only; keep private host and secret details in private runbooks or server-local env files
 - the deploy script now mirrors the MiniTickets flow more closely, including restoring server-local `package-lock.json` drift before pull and retrying the final health check instead of failing on the first transient public 502
+- the weekly 2026-05-16 security review also refreshed the dependency tree again; `npm audit --audit-level=moderate` returned to zero after moving the lockfile onto patched `next`, `fast-uri`, and `hono` transitives
 - use [deploy.md](/Users/iandorsey/dev/miniauth/docs/deploy.md) for build, deploy, health-check, and rollback steps
 - use [minitickets-migration.md](/Users/iandorsey/dev/miniauth/docs/minitickets-migration.md) for the MiniTickets integration path
 

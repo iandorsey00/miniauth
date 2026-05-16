@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const returnTo = getValidatedReturnTo(requestUrl.searchParams.get("returnTo"));
   const fetchSite = request.headers.get("sec-fetch-site");
-  const canAutoSubmit = fetchSite === "same-origin" || fetchSite === "same-site" || fetchSite === "none";
+  const canAutoSubmit = fetchSite === "same-origin";
   const html = `<!doctype html>
 <html lang="en">
   <head>
