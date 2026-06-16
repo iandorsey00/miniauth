@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { AUTH_COOKIES, AUTH_ROUTES } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { getDictionary } from "@/lib/i18n";
+import { prisma } from "@/lib/prisma";
+import { sha256 } from "@/lib/tokens";
 
 function escapeHtml(value: string) {
   return value
@@ -28,11 +30,29 @@ export async function GET(request: Request) {
   const dictionary = getDictionary(locale);
   const recoveryCodes = cookieStore.get(env.totpRecoveryCookieName)?.value?.split(",").filter(Boolean) ?? [];
 
-  const isFirstPartyNavigation = fetchSite === "same-origin" || fetchSite === "same-site" || fetchSite === "none";
+  const isFirstPartyNavigation = fetchSite === "same-origin";
 
-  if (!recoveryCodes.length || handoff !== "1" || !isFirstPartyNavigation) {
+  const handoffRecord = handoff
+    ? await prisma.totpRecoveryHandoff.findUnique({
+        where: { tokenHash: sha256(handoff) },
+      })
+    : null;
+
+  if (
+    !recoveryCodes.length ||
+    !handoffRecord ||
+    handoffRecord.userId !== user.id ||
+    handoffRecord.consumedAt ||
+    handoffRecord.expiresAt < new Date() ||
+    !isFirstPartyNavigation
+  ) {
     return Response.redirect(new URL(`${AUTH_ROUTES.home}?totp=ready`, env.baseUrl), 307);
   }
+
+  await prisma.totpRecoveryHandoff.update({
+    where: { id: handoffRecord.id },
+    data: { consumedAt: new Date() },
+  });
 
   cookieStore.set(env.totpRecoveryCookieName, "", {
     expires: new Date(0),

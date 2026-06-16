@@ -1,5 +1,7 @@
 :root {
   color-scheme: light dark;
+  --font-sans-latin: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-sans-zh: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC Variable", "Noto Sans SC", "Inter", "Helvetica Neue", Arial, sans-serif;
   --accent: #2563eb;
   --accent-soft: rgba(37, 99, 235, 0.14);
   --accent-glow-strong: rgba(37, 99, 235, 0.08);
@@ -25,7 +27,7 @@ html:lang(en) button,
 html:lang(en) input,
 html:lang(en) select,
 html:lang(en) textarea {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-sans-latin);
 }
 
 html:lang(zh) body,
@@ -38,7 +40,7 @@ html:lang(zh-CN) button,
 html:lang(zh-CN) input,
 html:lang(zh-CN) select,
 html:lang(zh-CN) textarea {
-  font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC Variable", "Noto Sans SC", "Inter", sans-serif;
+  font-family: var(--font-sans-zh);
 }
 
 :lang(zh) .subtitle-only,
@@ -149,7 +151,7 @@ body {
     radial-gradient(circle at bottom left, var(--accent-glow-auth-soft), transparent 34%),
     linear-gradient(180deg, var(--bg), var(--bg-strong));
   color: var(--text);
-  font-family: "Inter", "Noto Sans SC Variable", sans-serif;
+  font-family: var(--font-sans-latin);
 }
 
 a {
@@ -537,7 +539,7 @@ label {
 
 .login-brand-subtitle {
   color: var(--accent);
-  font-family: "Inter", sans-serif !important;
+  font-family: var(--font-sans-latin) !important;
   font-variant-east-asian: normal;
   font-size: clamp(1.15rem, 2.5vw, 1.45rem);
   font-weight: 600;

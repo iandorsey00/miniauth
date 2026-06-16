@@ -66,6 +66,7 @@ model User {
   loginEmailChallenges LoginEmailChallenge[]
   loginTotpChallenges LoginTotpChallenge[]
   totpRecoveryCodes   TotpRecoveryCode[]
+  totpRecoveryHandoffs TotpRecoveryHandoff[]
   appAccess           AppAccess[]
   memberships         WorkspaceMembership[]
 }
@@ -129,6 +130,18 @@ model TotpRecoveryCode {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, usedAt])
+}
+
+model TotpRecoveryHandoff {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model AuthRateLimit {

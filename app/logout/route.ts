@@ -47,11 +47,15 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
+  const fetchSite = request.headers.get("sec-fetch-site");
+  const allowedOrigin = new URL(env.baseUrl).origin;
+
   if (origin) {
-    const allowedOrigin = new URL(env.baseUrl).origin;
     if (origin !== allowedOrigin) {
       return new Response("Invalid logout origin", { status: 400 });
     }
+  } else if (fetchSite !== "same-origin") {
+    return new Response("Invalid logout origin", { status: 400 });
   }
 
   const formData = await request.formData();

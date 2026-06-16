@@ -28,7 +28,7 @@ import { createPasswordSetupToken, hashPasswordSetupToken } from "@/lib/password
 import { prisma } from "@/lib/prisma";
 import { assertRateLimit, clearRateLimit } from "@/lib/rate-limit";
 import { buildRedirectTarget, getPostLoginRedirectTarget, getValidatedReturnTo } from "@/lib/return-to";
-import { sha256 } from "@/lib/tokens";
+import { generateToken, sha256 } from "@/lib/tokens";
 import {
   buildTotpProvisioningUri,
   decryptTotpSecret,
@@ -516,6 +516,7 @@ export async function confirmTotpSetupAction(formData: FormData) {
   }
 
   const recoveryCodes = generateRecoveryCodes();
+  const recoveryHandoffToken = generateToken();
   const cookieStore = await cookies();
   const recoveryCookieExpires = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -538,6 +539,16 @@ export async function confirmTotpSetupAction(formData: FormData) {
         codeHash: sha256(normalizeRecoveryCode(code)),
       })),
     }),
+    prisma.totpRecoveryHandoff.deleteMany({
+      where: { userId: user.id },
+    }),
+    prisma.totpRecoveryHandoff.create({
+      data: {
+        userId: user.id,
+        tokenHash: sha256(recoveryHandoffToken),
+        expiresAt: recoveryCookieExpires,
+      },
+    }),
   ]);
 
   cookieStore.set(env.totpRecoveryCookieName, recoveryCodes.join(","), {
@@ -547,7 +558,7 @@ export async function confirmTotpSetupAction(formData: FormData) {
     expires: recoveryCookieExpires,
     path: AUTH_ROUTES.totpRecovery,
   });
-  cookieStore.set(AUTH_COOKIES.totpRecoveryHandoff, "1", {
+  cookieStore.set(AUTH_COOKIES.totpRecoveryHandoff, recoveryHandoffToken, {
     httpOnly: true,
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
@@ -603,6 +614,9 @@ export async function disableTotpAction(formData: FormData) {
       where: { userId: user.id },
     }),
     prisma.loginTotpChallenge.deleteMany({
+      where: { userId: user.id },
+    }),
+    prisma.totpRecoveryHandoff.deleteMany({
       where: { userId: user.id },
     }),
   ]);

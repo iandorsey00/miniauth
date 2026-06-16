@@ -11,6 +11,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: env.appName,
   description: "Shared login for MiniTickets and related small apps.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [{ url: "/apple-icon.png" }],
+  },
 };
 
 const themeTokens = new Set(["system", "light", "dark"]);
