@@ -9,6 +9,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "prisma generate && eslint .",
+    "portfolio:capture": "node scripts/capture-portfolio.mjs",
     "db:push": "prisma db push && prisma generate",
     "db:seed": "prisma db seed",
     "bootstrap:admin": "node --experimental-strip-types scripts/bootstrap-admin.ts",

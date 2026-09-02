@@ -2,6 +2,8 @@
 
 MiniAuth is a small shared login service for MiniTickets and related self-hosted apps.
 
+![MiniAuth admin dashboard showing synthetic account, session, MFA, and app-access data](docs/portfolio/screenshots/01-admin-overview.png)
+
 ## V0.1 scope
 
 - local-account sign-in
